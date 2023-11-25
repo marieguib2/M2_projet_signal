@@ -1,0 +1,55 @@
+---
+title: "Projet_Marie"
+author: "Marie Guibert"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+data <- read.csv("dataset_tk.csv", stringsAsFactors = T)
+summary(data)
+nrow(data)
+dim(data)
+View(data)
+```
+
+```{r}
+colnames(data)
+```
+
+```{r}
+nb_punjab<-28000000
+nb_haryana<-25000000
+nb_rajasthan<-70000000
+nb_delhi<-12000000
+nb_up<-210000000
+nb_uttarakhand<-10000000
+nb_hp<-7000000
+nb_jk<-13000000
+nb_chandigarh<-1000000
+nb_hhattisgarh<-27000000
+nb_gujarat<-64000000
+nb_mp<-78000000
+nb_maharashtra<-118000000
+nb_goa<-1500000
+nb_dnh<-600000
+nb_andhra_pradesh<-52000000
+nb_telangana<-36000000
+nb_karnataka<-64000000
+nb_kerala<-34000000
+nb_tamil_nadu<-75000000
+nb_pondy<-1200000
+nb_bihar<-110000000
+nb_jharkhand<-35000000
+nb_odisha<-44000000
+nb_west_bengal<-96000000
+nb_sikkim<-600000
+nb_arunachal_pradesh<-1500000
+nb_assam<-33000000
+nb_manipur<-3000000
+nb_meghalaya<-3000000
+nb_mizoram<-1100000
+nb_nagaland<-2000000
+nb_tripure<-4000000
+```
+
