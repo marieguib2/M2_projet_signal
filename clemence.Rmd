@@ -1,0 +1,48 @@
+---
+title: "clemence"
+author: "Clémence CHESNAIS"
+date: "2023-11-25"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Cette base de données décrit la consommation d'énergie dans 33 Etats d'Inde entre 2019 et 2020.
+Nous avons 503 points de mesure, les données sont mesurées chaque jour et chaque Etat représente une colonne.
+
+```{r}
+data <- read.csv("dataset_tk.csv", stringsAsFactors = T)
+summary(data)
+nrow(data)
+dim(data)
+View(data)
+```
+
+```{r}
+library(ggplot2)
+
+# Assurez-vous que la colonne Date est de type date
+data$X <- as.Date(data$X, format = "%d/%m/%Y %H:%M:%S")
+
+# Utilisation de la fonction gather pour mettre en forme les données
+data_long <- tidyr::gather(data, key = "Etat", value = "Consommation", -X)
+
+# Création du graphique avec ggplot
+ggplot(data_long, aes(x = X, y = Consommation, color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
+  theme_minimal()
+
+```
+
+Le grand nombre d'Etat rend la lecture difficile. Nous pouvons tout de même remarquer que certains Etats se distingue par le forte consommation d'énergie.
+
+Par ailleurs, nous remarquons de forte fluctuation tout au long de l'année avec des données peu lisses
+
+Données irrégulières --> base ondelettes ? 
+
+
+
+
