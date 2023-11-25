@@ -9,6 +9,12 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+
 Cette base de données décrit la consommation d'énergie dans 33 Etats d'Inde entre 2019 et 2020.
 Nous avons 503 points de mesure, les données sont mesurées chaque jour et chaque Etat représente une colonne.
 
@@ -17,27 +23,102 @@ data <- read.csv("dataset_tk.csv", stringsAsFactors = T)
 summary(data)
 nrow(data)
 dim(data)
-View(data)
+# View(data)
 ```
+
+
+```{r}
+colnames(data)
+```
+
+
+Nous allons normaliser les données par le nombre d'habitants pour avoir des résultats plus cohérents et que les consommations aient le même impact dans notre étude.
+
+On récupère d'abord le nombre d'habitants par Etat. 
+
+```{r}
+nb_punjab<-28000000
+nb_haryana<-25000000
+nb_rajasthan<-70000000
+nb_delhi<-12000000
+nb_up<-210000000
+nb_uttarakhand<-10000000
+nb_hp<-7000000
+nb_jk<-13000000
+nb_chandigarh<-1000000
+nb_chhattisgarh<-27000000
+nb_gujarat<-64000000
+nb_mp<-78000000
+nb_maharashtra<-118000000
+nb_goa<-1500000
+nb_dnh<-600000
+nb_andhra_pradesh<-52000000
+nb_telangana<-36000000
+nb_karnataka<-64000000
+nb_kerala<-34000000
+nb_tamil_nadu<-75000000
+nb_pondy<-1200000
+nb_bihar<-110000000
+nb_jharkhand<-35000000
+nb_odisha<-44000000
+nb_west_bengal<-96000000
+nb_sikkim<-600000
+nb_arunachal_pradesh<-1500000
+nb_assam<-33000000
+nb_manipur<-3000000
+nb_meghalaya<-3000000
+nb_mizoram<-1100000
+nb_nagaland<-2000000
+nb_tripure<-4000000
+```
+
+Ensuite, on normalise les données : 
+
+```{r}
+# Créer un vecteur contenant le nombre d'habitants pour chaque État
+nb_population <- c(
+  nb_punjab, nb_haryana, nb_rajasthan, nb_delhi, nb_up, nb_uttarakhand,
+  nb_hp, nb_jk, nb_chandigarh, nb_chhattisgarh, nb_gujarat, nb_mp,
+  nb_maharashtra, nb_goa, nb_dnh, nb_andhra_pradesh, nb_telangana,
+  nb_karnataka, nb_kerala, nb_tamil_nadu, nb_pondy, nb_bihar, nb_jharkhand,
+  nb_odisha, nb_west_bengal, nb_sikkim, nb_arunachal_pradesh, nb_assam,
+  nb_manipur, nb_meghalaya, nb_mizoram, nb_nagaland, nb_tripure
+)
+
+normalized_energy <- data
+normalized_energy[, -1] <- t(t(data[, -1])/ nb_population)
+normalized_energy <- normalized_energy |> 
+  rename(Date=X)
+
+# Renommer les colonnes
+# colnames(normalized_energy) <- c(colnames(data)[-1], "Date")
+
+# Afficher les premières lignes du dataframe normalisé
+head(normalized_energy)
+
+
+```
+
+Première représentation
 
 ```{r}
 library(ggplot2)
 
 # Assurez-vous que la colonne Date est de type date
-data$X <- as.Date(data$X, format = "%d/%m/%Y %H:%M:%S")
+normalized_energy$Date <- as.Date(normalized_energy$Date, format = "%d/%m/%Y %H:%M:%S")
 
 # Utilisation de la fonction gather pour mettre en forme les données
-data_long <- tidyr::gather(data, key = "Etat", value = "Consommation", -X)
+data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
 
 # Création du graphique avec ggplot
-ggplot(data_long, aes(x = X, y = Consommation, color = Etat)) +
+ggplot(data_long, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
   theme_minimal()
 
 ```
 
-Le grand nombre d'Etat rend la lecture difficile. Nous pouvons tout de même remarquer que certains Etats se distingue par le forte consommation d'énergie.
+Le grand nombre d'Etat rend la lecture difficile. Nous pouvons tout de même remarquer qu'un Etat se distingue par sa forte consommation d'énergie.
 
 Par ailleurs, nous remarquons de forte fluctuation tout au long de l'année avec des données peu lisses
 
