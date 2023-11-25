@@ -5,3 +5,11 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
+```{r}
+data <- read.csv("dataset_tk.csv", stringsAsFactors = T)
+summary(data)
+nrow(data)
+dim(data)
+View(data)
+```
+
