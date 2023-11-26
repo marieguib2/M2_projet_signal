@@ -151,9 +151,24 @@ On peut tout de même distinguer un individu avec un comportement un peu plus at
 Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
 
 
+# COMMENTAIRE A MODIFIER : 
+Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. On se ramènera à la fin au signal de départ de taille 365.
 
+```{r}
+# Extraire la colonne de consommation (ajustez le nom de la colonne si nécessaire)
+y <- data_long$Consommation
+plot(y,type="l",main="signal de départ", ylab = "Consommation")
 
+# Créer un signal symétrisé
+ysym = c(y, rev(tail(y, n = length(y) - 1)))
 
+# Tracer le signal symétrisé
+plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation")
+
+# Ajouter une ligne verticale à la position 33*365 
+# axe de symétrie : 365 jours et 33 pays 
+abline(v = 33*365, lty = 2)
+```
 
 
 # Sources 
