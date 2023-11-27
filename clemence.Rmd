@@ -8,6 +8,7 @@ output: html_notebook
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(ggplot2)
+library(readxl)
 ```
 
 # Notre base de données
@@ -17,7 +18,12 @@ library(ggplot2)
 Dans un premier temps, nous allons importer les données.
 
 ```{r}
-data <- read.csv("dataset_tk.csv")
+# data <- read.csv("dataset_tk.csv")
+data <- read.csv("long_data.csv")
+
+colnames(data) <- c("Etat", "Regions", "latitude", "longitude", "Date", "Consommation")
+data <- data[,-c(3,4)]
+data$Etat <- as.factor(data$Etat)
 summary(data)
 # View(data)
 ```
@@ -38,22 +44,22 @@ Nous avons 503 lignes, soit **503 points de mesure**. Les données journalières
 Ensuite, on transforme notre variable X en date pour qu'elle ait le bon format. 
 
 ```{r}
-data$X <- as.Date(data$X, format = "%d/%m/%Y %H:%M:%S")
+data$Date <- as.Date(data$Date, format = "%d/%m/%Y %H:%M:%S")
 str(data) # Vérification
 ```
 
 Pour simplifier notre analyse, nous allons nous concentrer seulement sur une seule année : 
 
 ```{r}
-data <- data %>%
-  filter(X <= as.Date("2020-01-02"))
+data <- data |> 
+  filter(Date <= as.Date("2020-01-02"))
 ```
 
 On vérifie à présent que les données que l'on va analyser correspondent bien à la période choisie. 
 
 ```{r}
-min(data$X)
-max(data$X)
+min(data$Date)
+max(data$Date)
 ```
 
 ## Normalisation des données 
@@ -103,18 +109,23 @@ Ensuite, on normalise les données :
 ```{r}
 # Créer un vecteur contenant le nombre d'habitants pour chaque État d'Inde
 nb_population <- c(
-  nb_punjab, nb_haryana, nb_rajasthan, nb_delhi, nb_up, nb_uttarakhand,
-  nb_hp, nb_jk, nb_chandigarh, nb_chhattisgarh, nb_gujarat, nb_mp,
-  nb_maharashtra, nb_goa, nb_dnh, nb_andhra_pradesh, nb_telangana,
-  nb_karnataka, nb_kerala, nb_tamil_nadu, nb_pondy, nb_bihar, nb_jharkhand,
-  nb_odisha, nb_west_bengal, nb_sikkim, nb_arunachal_pradesh, nb_assam,
-  nb_manipur, nb_meghalaya, nb_mizoram, nb_nagaland, nb_tripure
+  "Punjab"=nb_punjab, "Haryana"=nb_haryana,"Rajasthan"=nb_rajasthan, "Delhi"=nb_delhi, 
+  "UP"=nb_up, "Uttarakhand"=nb_uttarakhand,
+  "HP"=nb_hp, "J&K"=nb_jk, "Chandigarh" =nb_chandigarh, "Chhattisgarh"=nb_chhattisgarh, 
+  "Gujarat"=nb_gujarat,"MP"=nb_mp,
+  "Maharashtra" =nb_maharashtra, "GOA"=nb_goa, "DNH"=nb_dnh, "Andhra Pradesh"=nb_andhra_pradesh, 
+  "Telangana"=nb_telangana,
+  "Karnataka"=nb_karnataka,"Kerala"=nb_kerala, "Tamil Nadu"=nb_tamil_nadu, "Pondy"=nb_pondy, 
+  "Bihar"=nb_bihar, "Jharkhand"=nb_jharkhand,
+  "Odisha"=nb_odisha, "West Bengal"=nb_west_bengal, "Sikkim"=nb_sikkim, "Arunachal Pradesh"=nb_arunachal_pradesh, "Assam"=nb_assam,
+  "Manipur"=nb_manipur, "Meghalaya"=nb_meghalaya, "Mizoram"=nb_mizoram, "Nagaland"=nb_nagaland, "Tripura"=nb_tripure
 )
 
 normalized_energy <- data
-normalized_energy[, -1] <- t(t(data[, -1])/ nb_population)
-normalized_energy <- normalized_energy |> 
-  rename(Date=X)
+for(i in 1:nrow(normalized_energy)){
+  normalized_energy$Consommation[i] <- normalized_energy$Consommation[i] / nb_population[normalized_energy$Etat[i]][[1]]
+}
+
 
 # Afficher les premières lignes du dataframe normalisé
 head(normalized_energy)
@@ -135,10 +146,10 @@ Nous allons tout d'abord représenter simplement nos données pour pouvoir faire
 
 ```{r}
 # Utilisation de la fonction gather pour mettre en forme les données
-data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
+# data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
 
 # Création du graphique avec ggplot
-ggplot(data_long, aes(x = Date, y = Consommation, color = Etat)) +
+ggplot(normalized_energy, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
   theme_minimal()
@@ -156,7 +167,7 @@ Pour la courbe de température de longueur 365, on symétrise le signal à la fi
 
 ```{r}
 # Extraire la colonne de consommation (ajustez le nom de la colonne si nécessaire)
-y <- data_long$Consommation
+y <- normalized_energy$Consommation
 plot(y,type="l",main="signal de départ", ylab = "Consommation")
 
 # Créer un signal symétrisé
