@@ -8,6 +8,8 @@ output: html_notebook
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(ggplot2)
+library(fda)
+library(wavethresh)
 ```
 
 # Notre base de données
@@ -168,6 +170,19 @@ plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation")
 # Ajouter une ligne verticale à la position 33*365 
 # axe de symétrie : 365 jours et 33 pays 
 abline(v = 33*365, lty = 2)
+```
+
+Nous allons à présent travailler sur le signal symétrisé. \
+
+Pour pouvoir procéder à une **décomposition dans une base d'ondelettes avec x moments nuls**, nous allons tester plusieurs valeurs pour pouvoir s'approcher du nombre optimal de moments nuls. 
+
+
+```{r}
+# Décomposition en ondelettes avec 8 moments nuls (ajustez le nombre si nécessaire)
+coefs <- wd(ysym, filter.number = 8, family = "DaubLeAsymm")
+
+# Tracer les coefficients d'ondelettes
+plot(coefs, scaling = "by.level")
 ```
 
 
