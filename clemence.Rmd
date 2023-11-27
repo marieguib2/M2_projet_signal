@@ -1,38 +1,64 @@
 ---
-title: "clemence"
-author: "Clémence CHESNAIS"
-date: "2023-11-25"
-output: pdf_document
+title: "Analyse des données de consommations d'énergie en Inde"
+output: html_notebook
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+# Environnement de travail
 
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(ggplot2)
 ```
 
+# Notre base de données
 
-Cette base de données décrit la consommation d'énergie dans 33 Etats d'Inde entre 2019 et 2020.
-Nous avons 503 points de mesure, les données sont mesurées chaque jour et chaque Etat représente une colonne.
+## Import des données
+
+Dans un premier temps, nous allons importer les données.
 
 ```{r}
-data <- read.csv("dataset_tk.csv", stringsAsFactors = T)
+data <- read.csv("dataset_tk.csv")
 summary(data)
-nrow(data)
-dim(data)
 # View(data)
 ```
 
+Grâce à ce résumé statistique, nous pouvons voir que les valeurs de nos données sont assez étendues.\
+En effet, certains pays présentent des valeurs assez faibles (inférieures à 3) alors que certains pays ont des données 10 fois plus importantes comme le ... par exemple. \
+Nous allons donc normaliser les données par le nombre d'habitants pour avoir des données cohérentes.
 
 ```{r}
-colnames(data)
+dim(data)
+```
+Cette base de données décrit la consommation d'énergie dans **33 Etats** d'Inde entre 2019 et 2020. \
+Nous avons 503 lignes, soit **503 points de mesure**. Les données journalières, exprimées en Mega Units et chaque Etat représente une colonne.
+
+
+## Choix de la période étudiée
+
+Ensuite, on transforme notre variable X en date pour qu'elle ait le bon format. 
+
+```{r}
+data$X <- as.Date(data$X, format = "%d/%m/%Y %H:%M:%S")
+str(data) # Vérification
 ```
 
+Pour simplifier notre analyse, nous allons nous concentrer seulement sur une seule année : 
 
-Nous allons normaliser les données par le nombre d'habitants pour avoir des résultats plus cohérents et que les consommations aient le même impact dans notre étude.
+```{r}
+data <- data %>%
+  filter(X <= as.Date("2020-01-02"))
+```
+
+On vérifie à présent que les données que l'on va analyser correspondent bien à la période choisie. 
+
+```{r}
+min(data$X)
+max(data$X)
+```
+
+## Normalisation des données 
+
+Nous allons normaliser les données par le nombre d'habitants pour avoir des résultats plus cohérents et que les consommations aient le même impact dans notre étude. Nous tenons à préciser que notre analyse sera un peu biaisée à cause des données sur le nombre d'habitants dans chaque pays car nous avons choisi de prendre des arrondis (voir source).
 
 On récupère d'abord le nombre d'habitants par Etat. 
 
@@ -51,7 +77,7 @@ nb_gujarat<-64000000
 nb_mp<-78000000
 nb_maharashtra<-118000000
 nb_goa<-1500000
-nb_dnh<-600000
+nb_dnh<-400000
 nb_andhra_pradesh<-52000000
 nb_telangana<-36000000
 nb_karnataka<-64000000
@@ -75,7 +101,7 @@ nb_tripure<-4000000
 Ensuite, on normalise les données : 
 
 ```{r}
-# Créer un vecteur contenant le nombre d'habitants pour chaque État
+# Créer un vecteur contenant le nombre d'habitants pour chaque État d'Inde
 nb_population <- c(
   nb_punjab, nb_haryana, nb_rajasthan, nb_delhi, nb_up, nb_uttarakhand,
   nb_hp, nb_jk, nb_chandigarh, nb_chhattisgarh, nb_gujarat, nb_mp,
@@ -90,23 +116,24 @@ normalized_energy[, -1] <- t(t(data[, -1])/ nb_population)
 normalized_energy <- normalized_energy |> 
   rename(Date=X)
 
-# Renommer les colonnes
-# colnames(normalized_energy) <- c(colnames(data)[-1], "Date")
-
 # Afficher les premières lignes du dataframe normalisé
 head(normalized_energy)
-
-
 ```
 
-Première représentation
+Suite à cette normailisation, nous pouvons observer une diminution importante des valeurs. Ce constat est logique puisque chaque habitant consomme une part infime de l'énergie totale consommée par le pays. \
+Nous allons donc travailler avec de très petites valeurs.
+
+On vérifie le type de chaque variable avant de procéder à la suite de notre étude :
+```{r}
+str(normalized_energy)
+```
+
+
+# Représentations graphiques 
+
+Nous allons tout d'abord représenter simplement nos données pour pouvoir faire ressortir les informations importantes. 
 
 ```{r}
-library(ggplot2)
-
-# Assurez-vous que la colonne Date est de type date
-normalized_energy$Date <- as.Date(normalized_energy$Date, format = "%d/%m/%Y %H:%M:%S")
-
 # Utilisation de la fonction gather pour mettre en forme les données
 data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
 
@@ -115,15 +142,42 @@ ggplot(data_long, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
   theme_minimal()
+```
+Ce graphique nous montre que nos données sont très irrégulières. \
+On peut tout de même distinguer un individu avec un comportement un peu plus atypique => DNH => A VERIFIER
 
+# VERIFICATION A FAIRE
+
+Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
+
+
+# COMMENTAIRE A MODIFIER : 
+Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. On se ramènera à la fin au signal de départ de taille 365.
+
+```{r}
+# Extraire la colonne de consommation (ajustez le nom de la colonne si nécessaire)
+y <- data_long$Consommation
+plot(y,type="l",main="signal de départ", ylab = "Consommation")
+
+# Créer un signal symétrisé
+ysym = c(y, rev(tail(y, n = length(y) - 1)))
+
+# Tracer le signal symétrisé
+plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation")
+
+# Ajouter une ligne verticale à la position 33*365 
+# axe de symétrie : 365 jours et 33 pays 
+abline(v = 33*365, lty = 2)
 ```
 
-Le grand nombre d'Etat rend la lecture difficile. Nous pouvons tout de même remarquer qu'un Etat se distingue par sa forte consommation d'énergie.
+# A VOIR
 
-Par ailleurs, nous remarquons de forte fluctuation tout au long de l'année avec des données peu lisses
-
-Données irrégulières --> base ondelettes ? 
+regarder si ce qu'on a fait ce serait pas mieux avec l'autre BD
 
 
 
 
+# Sources 
+
+- base de données : https://www.kaggle.com/datasets/twinkle0705/state-wise-power-consumption-in-india?fbclid=IwAR3tNVrXpTrRlO_HVOoa53bcaTR8aR7QU_Nlbe4AhhmfzdK9ERa5Xxid1yk
+- nombre d'habitants par pays : https://fr.zhujiworld.com/in/673630-tripura/?fbclid=IwAR2Ua_lx2k7u-Nil065Pw0S0mK682X7e8AuvR5CS7lfpsbUBPIlEzNiwE2Q
