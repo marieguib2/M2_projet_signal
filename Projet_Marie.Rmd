@@ -184,6 +184,13 @@ coefs <- wd(ysym, filter.number = 8, family = "DaubLeAsymm")
 # Tracer les coefficients d'ondelettes
 plot(coefs, scaling = "by.level")
 ```
+# A FAIRE 
+- ne pas normaliser les données
+- réduire les données (soustraire la moyenne)
+- choisir bases de fourier avec bcp de noeuds (attention à ne pas faire de sur-apprentissage)
+- choisir bases de splines avec régression pénalisée pour pouvoir faire l'ACP
+
+
 
 
 # Sources 
