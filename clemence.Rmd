@@ -165,7 +165,7 @@ Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelett
 # COMMENTAIRE A MODIFIER : 
 Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. On se ramènera à la fin au signal de départ de taille 365.
 
-```{r}
+```{r}s
 # Extraire la colonne de consommation (ajustez le nom de la colonne si nécessaire)
 y <- normalized_energy$Consommation
 plot(y,type="l",main="signal de départ", ylab = "Consommation")
