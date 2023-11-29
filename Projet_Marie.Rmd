@@ -110,16 +110,24 @@ Pour pouvoir que les informations soient plus lisibles, nous avons décidé de s
 Nous avons fixé un seuil à 100 Mega Units pour réaliser ces graphiques. 
 
 ```{r}
-data_inf <- data |> 
-  filter(Consommation <= 55)
+moyenne_par_etat <- tapply(data$Consommation, data$Etat, mean)
+moyenne_par_etat <- data.frame(Etat = names(moyenne_par_etat), Moyenne = moyenne_par_etat)
+
+data_complete <- merge(data,moyenne_par_etat, by = "Etat")
+```
+
+
+```{r}
+data_inf <- data_complete |> 
+  filter(Moyenne <= 50)
 # data_inf
 
-data_moy <- data |> 
-  filter(Consommation > 55 & Consommation < 200)
+data_moy <- data_complete |> 
+  filter(Moyenne > 50 & Moyenne < 200)
 # data_moy
 
-data_sup <- data |> 
-  filter(Consommation >= 200)
+data_sup <- data_complete |> 
+  filter(Moyenne >= 200)
 # data_sup
 ```
 
@@ -127,17 +135,17 @@ data_sup <- data |>
 ```{r}
 ggplot(data_inf, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant moins de 50 Mega Units en moyenne") +
   theme_minimal()
 
 ggplot(data_moy, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant entre 50 et 200 Mega Units en moyenne") +
   theme_minimal()
 
 ggplot(data_sup, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant plus de 200 Mega Units en moyenne") +
   theme_minimal()
 ```
 
