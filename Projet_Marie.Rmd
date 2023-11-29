@@ -151,30 +151,37 @@ ggplot(data_sup, aes(x = Date, y = Consommation, color = Etat)) +
 
 
 # Lissage
+
 Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
 
-
-Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. On se ramènera à la fin au signal de départ de taille 365.
+Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. 
+On se ramènera à la fin au signal de départ de taille 365.
 
 ```{r}
-# Extraire la colonne de consommation (ajustez le nom de la colonne si nécessaire)
-y <- normalized_energy$Consommation
-plot(y,type="l",main="signal de départ", ylab = "Consommation")
+data_long <- data |> 
+  select(-2)
 
-# Créer un signal symétrisé
-ysym = c(y, rev(tail(y, n = length(y) - 1)))
-
-# Tracer le signal symétrisé
-plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation")
-
-# Ajouter une ligne verticale à la position 33*365 
-# axe de symétrie : 365 jours et 33 pays 
-abline(v = 33*365, lty = 2)
+data_long <- data_long |> 
+  pivot_wider(names_from = "Etat", values_from = "Consommation")
 ```
 
-# A VOIR
 
-regarder si ce qu'on a fait ce serait pas mieux avec l'autre BD
+```{r}
+i = 2
+y <- as.vector(t(unlist(data_long[, i])))
+
+plot(1:361,y,type="l",main="Signal de départ", ylab = "Consommation", xlab="Jour")
+
+# Créer un signal symétrisé
+ysym = c(y, rev(tail(y, n= 512-length(y)))) # on choisit 512 pour avoir une puissance de 2
+
+# Tracer le signal symétrisé
+plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation", xlab = "Jour")
+
+# Ajouter une ligne verticale à la position 
+# axe de symétrie : 361 jours 
+abline(v = 361, lty = 2)
+```
 
 
 
