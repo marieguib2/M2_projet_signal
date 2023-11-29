@@ -9,6 +9,7 @@ output: html_notebook
 library(tidyverse)
 library(ggplot2)
 library(readxl)
+library(tidyr)
 ```
 
 # Notre base de données
@@ -224,15 +225,7 @@ tapply(data$Consommation, data$Etat, mean)
 
 
 
-
-# Lissage
-Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
-
-
-Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. On se ramènera à la fin au signal de départ de taille 365.
-
-
-# Lissage
+# Ondelettes
 
 
 Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
@@ -242,8 +235,7 @@ Le problème ici est que la longueur des courbes de consommation n'est pas de la
 On se ramènera à la fin au signal de départ de taille 365.
 
 ```{r}
-data_long <- data |> 
-  select(-2)
+data_long <- data.frame("Etat" = data$Etat,"Date"= data$Date,"Consommation" = data$Consommation)
 
 data_long <- data_long |> 
   pivot_wider(names_from = "Etat", values_from = "Consommation")
@@ -268,12 +260,68 @@ abline(v = 361, lty = 2)
 ```
 
 
+# Lissage par moindres carrés pénalisés
+
+## Lissage d'une trajectoire
+
+```{r}
+y <- as.vector(t(unlist(data_long[, i]))) # courbe du premier Etat : Punjab
+tps <- 1:361
+plot(tps,y,type="l", main = "Consommation d'énergie du Punjab")
+```
+
+1. Lissage par moindres carrés pénalisés sur la première courbe
+
+
+```{r}
+splbasis = create.bspline.basis(rangeval = c(1,361),norder=4,breaks= seq(1,15,by=1))
+# définition une base de B-spline entre 1 et 18 (âge min et max) 
+# ordre 4 (classique) 
+# breaks : on prend les âges de mesure comme point de rupture
+
+# On fait l'ajustement pour différentes valeurs de lambda pour minimiser le critère de pénalité
+# On veut la fonction la plus proche des points et la moins oscillante grâce à la pénalité
+gcv = 1:50 # grille de lambda
+
+for (i in 1:50){
+  
+  lambda = exp(i-10) 
+  # on teste exp(1-10), exp(1-9),... => permet d'avoir des petites / grandes valeurs
+  
+  fdpar = fdPar(splbasis,Lfdobj = 2,lambda=lambda) # calcul de la valeur de pénalité
+  # splbasis : base utilisée
+  # Lfdoj = 2 : ordre de la dérivée dans la pénalité (dérivée seconde)
+  
+  smoothdata = smooth.basis(tps,y, fdParobj = fdpar) # ajustement de l'objet fonctionnel
+  
+  # smooth.basis : équivalent à Data2fd mais AVEC pénalité
+  # donne la valeur du critère VC de Moindres Carrés Généralisé
+  
+  gcv[i] = mean(smoothdata$gcv) # gcv : general cross validation
+}
+plot(gcv)
+which.min(gcv)
+```
+On voit que le minimum est la ... valeur 
+
+Nous allons recalculer la pénalité et refaire le lissage avec la valeur de lambda minimale : 
+
+```{r}
+lambda = exp(which.min(gcv)-10)
+fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda) # calcul pénalité
+smoothdata = smooth.basis(tps,y,fdParobj = fdpar) # lissage
+plotfit.fd(y,tps,smoothdata$fd,pch=20,cex=0.5)
+```
+
+
 
 # A FAIRE
 
 base de spline pénalisé
 
 base de fourier avec bcp de noeuds
+
+vérifier pourquoi c'est pas 356
 
 
 # Sources 
