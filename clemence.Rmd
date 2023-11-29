@@ -111,15 +111,24 @@ Nous avons fixé un seuil
 
 ```
 
+[Représentation des données en deux parties].{underline}
+
+Pour pouvoir que les informations soient plus lisibles, nous avons décidé de séparer en plusieurs parties nos données. \
+Nous avons fixé des seuils par rapport à la moyenne de consommations des Etats pour réaliser ces graphiques. 
+
+```{r}
+moyenne_par_etat <- tapply(data$Consommation, data$Etat, mean)
+moyenne_par_etat <- data.frame(Etat = names(moyenne_par_etat), Moyenne = moyenne_par_etat)
+
+data_complete <- merge(data,moyenne_par_etat, by = "Etat")
+```
+
 
 [Représentation selon la région]{.underline}
 
 L'inde est divisé en 5 regions : le Nord (NR), Nord-Est (NER), le Sud (SR), l'Est (ER) et l'Ouest (WR)
 Nous traçons les consommations en fonction des régions (une couleur par région)
 
-```{r}
-
-```
 
 
 
