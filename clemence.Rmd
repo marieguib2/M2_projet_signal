@@ -9,6 +9,9 @@ output: html_notebook
 library(tidyverse)
 library(ggplot2)
 library(readxl)
+install.packages("kableExtra")
+library(knitr)
+library(kableExtra)
 ```
 
 # Notre base de données
@@ -111,10 +114,27 @@ Nous avons fixé un seuil
 
 ```
 
+
+## Représentations graphiques 
+
+Nous allons tout d'abord représenter simplement nos données pour pouvoir faire ressortir les informations importantes. 
+
+```{r}
+# Utilisation de la fonction gather pour mettre en forme les données
+# data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
+
+# Création du graphique avec ggplot
+ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
+  theme_minimal()
+```
+Ce graphique nous montre que nos données sont très irrégulières. \
+
 [Représentation des données en deux parties].{underline}
 
-Pour pouvoir que les informations soient plus lisibles, nous avons décidé de séparer en plusieurs parties nos données. \
-Nous avons fixé des seuils par rapport à la moyenne de consommations des Etats pour réaliser ces graphiques. 
+Pour pouvoir que les informations soient plus lisibles, nous avons décidé de séparer en deux nos données. \
+Nous avons fixé un seuil à 100 Mega Units pour réaliser ces graphiques. 
 
 ```{r}
 moyenne_par_etat <- tapply(data$Consommation, data$Etat, mean)
@@ -124,13 +144,108 @@ data_complete <- merge(data,moyenne_par_etat, by = "Etat")
 ```
 
 
+```{r}
+data_inf <- data_complete |> 
+  filter(Moyenne <= 50)
+# data_inf
+
+data_moy <- data_complete |> 
+  filter(Moyenne > 50 & Moyenne < 200)
+# data_moy
+
+data_sup <- data_complete |> 
+  filter(Moyenne >= 200)
+# data_sup
+```
+
+
+```{r}
+ggplot(data_inf, aes(x = Date, y = Consommation, color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant moins de 50 Mega Units en moyenne") +
+  theme_minimal()
+
+ggplot(data_moy, aes(x = Date, y = Consommation, color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant entre 50 et 200 Mega Units en moyenne") +
+  theme_minimal()
+
+ggplot(data_sup, aes(x = Date, y = Consommation, color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant plus de 200 Mega Units en moyenne") +
+  theme_minimal()
+```
+
+
+
 [Représentation selon la région]{.underline}
 
 L'inde est divisé en 5 regions : le Nord (NR), Nord-Est (NER), le Sud (SR), l'Est (ER) et l'Ouest (WR)
 Nous traçons les consommations en fonction des régions (une couleur par région)
 
+Nous calculons les moyennes des consommations par Regions:
 
 
+```{r}
+moyenne_par_reg <- tapply(data$Consommation, data$Regions, mean)
+moyenne_par_reg <- data.frame(Regions = names(moyenne_par_reg), Moyenne_reg = moyenne_par_reg)
+# 
+data_complete_reg <- merge(data_complete,moyenne_par_reg, by = "Regions")
+```
+
+
+```{r}
+data_inf <- data_complete_reg |> 
+  filter(Moyenne_reg <= 66)
+# data_inf
+
+data_moy <- data_complete_reg |> 
+  filter(Moyenne_reg > 66 & Moyenne_reg < 150)
+# data_moy
+
+data_sup <- data_complete_reg |> 
+  filter(Moyenne_reg >= 150)
+# data_sup
+```
+
+
+```{r}
+ggplot(data, aes(x = Date, y = Consommation, color = Regions)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
+  theme_minimal()
+```
+
+
+
+```{r}
+ggplot(data_inf, aes(x = Date, y = Consommation, color = Regions)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant moins de 50 Mega Units en moyenne") +
+  theme_minimal()
+
+ggplot(data_moy, aes(x = Date, y = Consommation, color = Regions)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant entre 50 et 200 Mega Units en moyenne") +
+  theme_minimal()
+
+ggplot(data_sup, aes(x = Date, y = Consommation, color = Regions)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant plus de 200 Mega Units en moyenne") +
+  theme_minimal()
+```
+
+Les représentations graphiques ne nous permettent pas de bien visualiser.
+
+```{r}
+tapply(data$Consommation, data$Regions, mean)
+```
+Nous observons une grande disparité entre les régions de l'Inde. En effet, le Nord-Est à une consommation très faible par rapport à l'Ouest.
+
+
+```{r}
+tapply(data$Consommation, data$Etat, mean)
+```
 
 
 # Lissage
@@ -141,7 +256,7 @@ Pour la courbe de température de longueur 365, on symétrise le signal à la fi
 
 ```{r}
 # Extraire la colonne de consommation (ajustez le nom de la colonne si nécessaire)
-y <- normalized_energy$Consommation
+y <- data$Consommation
 plot(y,type="l",main="signal de départ", ylab = "Consommation")
 
 # Créer un signal symétrisé
