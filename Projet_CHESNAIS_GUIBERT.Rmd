@@ -8,30 +8,61 @@ output: html_notebook
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(ggplot2)
+library(readxl)
 ```
 
 # Notre base de données
+
+Notre étude porte sur l'analyse de la consommation d'énergie dans les 33 Etats d'Inde.
+
 
 ## Import des données
 
 Dans un premier temps, nous allons importer les données.
 
 ```{r}
-data <- read.csv("dataset_tk.csv", stringsAsFactors = T)
+data <- read.csv("long_data.csv")
+
+colnames(data) <- c("Etat", "Regions", "latitude", "longitude", "Date", "Consommation")
+data <- data[,-c(3,4)]
+data$Etat <- as.factor(data$Etat)
 summary(data)
 # View(data)
 ```
 
 Grâce à ce résumé statistique, nous pouvons voir que les valeurs de nos données sont assez étendues.\
-En effet, certains pays présentent des valeurs assez faibles (inférieures à 3) alors que certains pays ont des données 10 fois plus importantes comme le ... par exemple. \
+En effet, certains pays présentent des valeurs assez faibles (inférieures à 1) alors que certains pays ont des données 10 fois plus importantes comme le ... par exemple. \
 Nous allons donc normaliser les données par le nombre d'habitants pour avoir des données cohérentes.
 
 ```{r}
 dim(data)
 ```
-
 Cette base de données décrit la consommation d'énergie dans **33 Etats** d'Inde entre 2019 et 2020. \
 Nous avons 503 lignes, soit **503 points de mesure**. Les données journalières, exprimées en Mega Units et chaque Etat représente une colonne.
+
+
+## Choix de la période étudiée
+
+Ensuite, on transforme notre variable X en date pour qu'elle ait le bon format. 
+
+```{r}
+data$Date <- as.Date(data$Date, format = "%d/%m/%Y %H:%M:%S")
+str(data) # Vérification
+```
+
+Pour simplifier notre analyse, nous allons nous concentrer seulement sur une seule année : 
+
+```{r}
+data <- data |> 
+  filter(Date <= as.Date("2020-01-02"))
+```
+
+On vérifie à présent que les données que l'on va analyser correspondent bien à la période choisie. 
+
+```{r}
+min(data$Date)
+max(data$Date)
+```
 
 ## Normalisation des données 
 
@@ -54,7 +85,7 @@ nb_gujarat<-64000000
 nb_mp<-78000000
 nb_maharashtra<-118000000
 nb_goa<-1500000
-nb_dnh<-600000
+nb_dnh<-400000
 nb_andhra_pradesh<-52000000
 nb_telangana<-36000000
 nb_karnataka<-64000000
@@ -80,18 +111,23 @@ Ensuite, on normalise les données :
 ```{r}
 # Créer un vecteur contenant le nombre d'habitants pour chaque État d'Inde
 nb_population <- c(
-  nb_punjab, nb_haryana, nb_rajasthan, nb_delhi, nb_up, nb_uttarakhand,
-  nb_hp, nb_jk, nb_chandigarh, nb_chhattisgarh, nb_gujarat, nb_mp,
-  nb_maharashtra, nb_goa, nb_dnh, nb_andhra_pradesh, nb_telangana,
-  nb_karnataka, nb_kerala, nb_tamil_nadu, nb_pondy, nb_bihar, nb_jharkhand,
-  nb_odisha, nb_west_bengal, nb_sikkim, nb_arunachal_pradesh, nb_assam,
-  nb_manipur, nb_meghalaya, nb_mizoram, nb_nagaland, nb_tripure
+  "Punjab"=nb_punjab, "Haryana"=nb_haryana,"Rajasthan"=nb_rajasthan, "Delhi"=nb_delhi, 
+  "UP"=nb_up, "Uttarakhand"=nb_uttarakhand,
+  "HP"=nb_hp, "J&K"=nb_jk, "Chandigarh" =nb_chandigarh, "Chhattisgarh"=nb_chhattisgarh, 
+  "Gujarat"=nb_gujarat,"MP"=nb_mp,
+  "Maharashtra" =nb_maharashtra, "GOA"=nb_goa, "DNH"=nb_dnh, "Andhra Pradesh"=nb_andhra_pradesh, 
+  "Telangana"=nb_telangana,
+  "Karnataka"=nb_karnataka,"Kerala"=nb_kerala, "Tamil Nadu"=nb_tamil_nadu, "Pondy"=nb_pondy, 
+  "Bihar"=nb_bihar, "Jharkhand"=nb_jharkhand,
+  "Odisha"=nb_odisha, "West Bengal"=nb_west_bengal, "Sikkim"=nb_sikkim, "Arunachal Pradesh"=nb_arunachal_pradesh, "Assam"=nb_assam,
+  "Manipur"=nb_manipur, "Meghalaya"=nb_meghalaya, "Mizoram"=nb_mizoram, "Nagaland"=nb_nagaland, "Tripura"=nb_tripure
 )
 
 normalized_energy <- data
-normalized_energy[, -1] <- t(t(data[, -1])/ nb_population)
-normalized_energy <- normalized_energy |> 
-  rename(Date=X)
+for(i in 1:nrow(normalized_energy)){
+  normalized_energy$Consommation[i] <- normalized_energy$Consommation[i] / nb_population[normalized_energy$Etat[i]][[1]]
+}
+
 
 # Afficher les premières lignes du dataframe normalisé
 head(normalized_energy)
@@ -100,23 +136,57 @@ head(normalized_energy)
 Suite à cette normailisation, nous pouvons observer une diminution importante des valeurs. Ce constat est logique puisque chaque habitant consomme une part infime de l'énergie totale consommée par le pays. \
 Nous allons donc travailler avec de très petites valeurs.
 
+On vérifie le type de chaque variable avant de procéder à la suite de notre étude :
+```{r}
+str(normalized_energy)
+```
 
-## Représentations graphiques 
+
+# Représentations graphiques 
 
 Nous allons tout d'abord représenter simplement nos données pour pouvoir faire ressortir les informations importantes. 
 
 ```{r}
-normalized_energy$Date <- as.Date(normalized_energy$Date, format = "%d/%m/%Y %H:%M:%S")
-
 # Utilisation de la fonction gather pour mettre en forme les données
-data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
+# data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
 
 # Création du graphique avec ggplot
-ggplot(data_long, aes(x = Date, y = Consommation, color = Etat)) +
+ggplot(normalized_energy, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
   theme_minimal()
 ```
+Ce graphique nous montre que nos données sont très irrégulières. \
+On peut tout de même distinguer un individu avec un comportement un peu plus atypique => DNH => A VERIFIER
+
+# VERIFICATION A FAIRE
+
+Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
+
+
+# COMMENTAIRE A MODIFIER : 
+Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. On se ramènera à la fin au signal de départ de taille 365.
+
+```{r}
+# Extraire la colonne de consommation (ajustez le nom de la colonne si nécessaire)
+y <- normalized_energy$Consommation
+plot(y,type="l",main="signal de départ", ylab = "Consommation")
+
+# Créer un signal symétrisé
+ysym = c(y, rev(tail(y, n = length(y) - 1)))
+
+# Tracer le signal symétrisé
+plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation")
+
+# Ajouter une ligne verticale à la position 33*365 
+# axe de symétrie : 365 jours et 33 pays 
+abline(v = 33*365, lty = 2)
+```
+
+# A VOIR
+
+regarder si ce qu'on a fait ce serait pas mieux avec l'autre BD
+
 
 
 
