@@ -13,7 +13,7 @@ library(readxl)
 
 # Notre base de données
 
-Notre étude porte sur l'analyse de la consommation d'énergie dans les 33 Etats d'Inde.
+Notre étude porte sur l'analyse de la consommation d'énergie dans les 33 Etats d'Inde. Il est à noter que l’Inde est le troisième producteur et le troisième consommateur d’électricité au monde.
 
 
 ## Import des données
