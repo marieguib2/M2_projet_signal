@@ -46,15 +46,9 @@ dim(data)
 ```
 
 
-Au départ, nous avons voulu normaliser les données par le nombre d'habitants de chaque Etat. Cependant, cette méthode s'est révélée problématique car nous avons obtenu des valeurs très proches de zéro, ce qui aurait compliqué les calculs.
-
-Nous avons donc choisi de réduire les données de consommation, en soustrayant la moyenne, pour continuer notre analyse avec données moins disproportionnées.
-
-
-
 ## Choix de la période étudiée
 
-Ensuite, on transforme notre variable X en date pour qu'elle ait le bon format. 
+Nous allons transformer notre variable Date au format date pour poursuivre l'étude correctement.
 
 ```{r}
 data$Date <- as.Date(data$Date, format = "%d/%m/%Y %H:%M:%S")
@@ -77,83 +71,24 @@ max(data$Date)
 
 ## Normalisation des données 
 
-Nous allons normaliser les données par le nombre d'habitants pour avoir des résultats plus cohérents et que les consommations aient le même impact dans notre étude. Nous tenons à préciser que notre analyse sera un peu biaisée à cause des données sur le nombre d'habitants dans chaque pays car nous avons choisi de prendre des arrondis (voir source).
+Au départ, nous avons voulu normaliser les données par le nombre d'habitants de chaque Etat pour que les consommations aient le même impact dans notre étude. Cependant, cette méthode s'est révélée problématique car nous avons obtenu des valeurs très proches de zéro, ce qui aurait compliqué les calculs.
 
-On récupère d'abord le nombre d'habitants par Etat. 
-
-```{r}
-nb_punjab<-28000000
-nb_haryana<-25000000
-nb_rajasthan<-70000000
-nb_delhi<-12000000
-nb_up<-210000000
-nb_uttarakhand<-10000000
-nb_hp<-7000000
-nb_jk<-13000000
-nb_chandigarh<-1000000
-nb_chhattisgarh<-27000000
-nb_gujarat<-64000000
-nb_mp<-78000000
-nb_maharashtra<-118000000
-nb_goa<-1500000
-nb_dnh<-400000
-nb_andhra_pradesh<-52000000
-nb_telangana<-36000000
-nb_karnataka<-64000000
-nb_kerala<-34000000
-nb_tamil_nadu<-75000000
-nb_pondy<-1200000
-nb_bihar<-110000000
-nb_jharkhand<-35000000
-nb_odisha<-44000000
-nb_west_bengal<-96000000
-nb_sikkim<-600000
-nb_arunachal_pradesh<-1500000
-nb_assam<-33000000
-nb_manipur<-3000000
-nb_meghalaya<-3000000
-nb_mizoram<-1100000
-nb_nagaland<-2000000
-nb_tripure<-4000000
-```
-
-Ensuite, on normalise les données : 
+Nous avons donc choisi de réduire les données de consommation, en soustrayant la moyenne, pour continuer notre analyse avec données moins disproportionnées.
 
 ```{r}
-# Créer un vecteur contenant le nombre d'habitants pour chaque État d'Inde
-nb_population <- c(
-  "Punjab"=nb_punjab, "Haryana"=nb_haryana,"Rajasthan"=nb_rajasthan, "Delhi"=nb_delhi, 
-  "UP"=nb_up, "Uttarakhand"=nb_uttarakhand,
-  "HP"=nb_hp, "J&K"=nb_jk, "Chandigarh" =nb_chandigarh, "Chhattisgarh"=nb_chhattisgarh, 
-  "Gujarat"=nb_gujarat,"MP"=nb_mp,
-  "Maharashtra" =nb_maharashtra, "GOA"=nb_goa, "DNH"=nb_dnh, "Andhra Pradesh"=nb_andhra_pradesh, 
-  "Telangana"=nb_telangana,
-  "Karnataka"=nb_karnataka,"Kerala"=nb_kerala, "Tamil Nadu"=nb_tamil_nadu, "Pondy"=nb_pondy, 
-  "Bihar"=nb_bihar, "Jharkhand"=nb_jharkhand,
-  "Odisha"=nb_odisha, "West Bengal"=nb_west_bengal, "Sikkim"=nb_sikkim, "Arunachal Pradesh"=nb_arunachal_pradesh, "Assam"=nb_assam,
-  "Manipur"=nb_manipur, "Meghalaya"=nb_meghalaya, "Mizoram"=nb_mizoram, "Nagaland"=nb_nagaland, "Tripura"=nb_tripure
-)
+moyenne_par_etat <- tapply(data$Consommation, data$Etat, mean)
 
 normalized_energy <- data
 for(i in 1:nrow(normalized_energy)){
-  normalized_energy$Consommation[i] <- normalized_energy$Consommation[i] / nb_population[normalized_energy$Etat[i]][[1]]
+  normalized_energy$Consommation[i] <- normalized_energy$Consommation[i] - moyenne_par_etat[normalized_energy$Etat[i]]
 }
-
-
-# Afficher les premières lignes du dataframe normalisé
-head(normalized_energy)
-```
-
-Suite à cette normailisation, nous pouvons observer une diminution importante des valeurs. Ce constat est logique puisque chaque habitant consomme une part infime de l'énergie totale consommée par le pays. \
-Nous allons donc travailler avec de très petites valeurs.
-
-On vérifie le type de chaque variable avant de procéder à la suite de notre étude :
-```{r}
-str(normalized_energy)
 ```
 
 
-# Représentations graphiques 
+Suite à cette normailisation, nous pouvons observer une diminution importante des valeurs. Mais nous obtenons des valeurs de consommations négatives, ce qui pose problème pour l'interprétation de nos analyses. 
+Nous allons donc travailler avec les valeurs initiales. 
+
+## Représentations graphiques 
 
 Nous allons tout d'abord représenter simplement nos données pour pouvoir faire ressortir les informations importantes. 
 
@@ -162,20 +97,29 @@ Nous allons tout d'abord représenter simplement nos données pour pouvoir faire
 # data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
 
 # Création du graphique avec ggplot
-ggplot(normalized_energy, aes(x = Date, y = Consommation, color = Etat)) +
+ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
   theme_minimal()
 ```
 Ce graphique nous montre que nos données sont très irrégulières. \
-On peut tout de même distinguer un individu avec un comportement un peu plus atypique => DNH => A VERIFIER
 
-# VERIFICATION A FAIRE
+Pour pouvoir que les informations soient plus lisibles, nous avons décidé de séparer en deux nos données. \
+Nous avons fixé un seuil
 
+```{r}
+
+```
+
+
+
+
+
+
+# Lissage
 Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
 
 
-# COMMENTAIRE A MODIFIER : 
 Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. On se ramènera à la fin au signal de départ de taille 365.
 
 ```{r}

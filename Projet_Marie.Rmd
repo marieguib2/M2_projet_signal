@@ -8,31 +8,48 @@ output: html_notebook
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(ggplot2)
-library(fda)
-library(wavethresh)
+library(readxl)
 ```
 
 # Notre base de données
+
+Notre étude porte sur l'analyse de la consommation d'énergie dans les 33 Etats d'Inde.
+
 
 ## Import des données
 
 Dans un premier temps, nous allons importer les données.
 
 ```{r}
-data <- read.csv("dataset_tk.csv")
+data <- read.csv("long_data.csv", stringsAsFactors = T)
+
+colnames(data) <- c("Etat", "Regions", "latitude", "longitude", "Date", "Consommation")
+data <- data[,-c(3,4)]
 summary(data)
 # View(data)
 ```
 
 Grâce à ce résumé statistique, nous pouvons voir que les valeurs de nos données sont assez étendues.\
-En effet, certains pays présentent des valeurs assez faibles (inférieures à 3) alors que certains pays ont des données 10 fois plus importantes comme le ... par exemple. \
-Nous allons donc normaliser les données par le nombre d'habitants pour avoir des données cohérentes.
+
+```{r}
+data$Etat[which.max(data$Consommation)]
+data$Etat[which.min(data$Consommation)]
+```
+
+En effet, certaines valeurs journalières sont très faibles (inférieures à 1) alors que d'autres sont 500 fois plus élevées. Par exemple, le Maharashtra qui présente certaines valeurs très importantes en opposition avec le Sikkim. 
+
+Concernant notre base de données, elle décrit la consommation d'énergie dans **33 Etats** d'Inde entre 2019 et 2020. \
+Nous avons 16 599 lignes, soit **503 points de mesure** par pays (503*33). Les données sont journalières, exprimées en Mega Units.
 
 ```{r}
 dim(data)
 ```
-Cette base de données décrit la consommation d'énergie dans **33 Etats** d'Inde entre 2019 et 2020. \
-Nous avons 503 lignes, soit **503 points de mesure**. Les données journalières, exprimées en Mega Units et chaque Etat représente une colonne.
+
+
+Au départ, nous avons voulu normaliser les données par le nombre d'habitants de chaque Etat. Cependant, cette méthode s'est révélée problématique car nous avons obtenu des valeurs très proches de zéro, ce qui aurait compliqué les calculs.
+
+Nous avons donc choisi de réduire les données de consommation, en soustrayant la moyenne, pour continuer notre analyse avec données moins disproportionnées.
+
 
 
 ## Choix de la période étudiée
@@ -40,22 +57,22 @@ Nous avons 503 lignes, soit **503 points de mesure**. Les données journalières
 Ensuite, on transforme notre variable X en date pour qu'elle ait le bon format. 
 
 ```{r}
-data$X <- as.Date(data$X, format = "%d/%m/%Y %H:%M:%S")
+data$Date <- as.Date(data$Date, format = "%d/%m/%Y %H:%M:%S")
 str(data) # Vérification
 ```
 
 Pour simplifier notre analyse, nous allons nous concentrer seulement sur une seule année : 
 
 ```{r}
-data <- data %>%
-  filter(X <= as.Date("2020-01-02"))
+data <- data |> 
+  filter(Date <= as.Date("2020-01-02"))
 ```
 
 On vérifie à présent que les données que l'on va analyser correspondent bien à la période choisie. 
 
 ```{r}
-min(data$X)
-max(data$X)
+min(data$Date)
+max(data$Date)
 ```
 
 ## Normalisation des données 
@@ -79,7 +96,7 @@ nb_gujarat<-64000000
 nb_mp<-78000000
 nb_maharashtra<-118000000
 nb_goa<-1500000
-nb_dnh<-600000
+nb_dnh<-400000
 nb_andhra_pradesh<-52000000
 nb_telangana<-36000000
 nb_karnataka<-64000000
@@ -105,18 +122,23 @@ Ensuite, on normalise les données :
 ```{r}
 # Créer un vecteur contenant le nombre d'habitants pour chaque État d'Inde
 nb_population <- c(
-  nb_punjab, nb_haryana, nb_rajasthan, nb_delhi, nb_up, nb_uttarakhand,
-  nb_hp, nb_jk, nb_chandigarh, nb_chhattisgarh, nb_gujarat, nb_mp,
-  nb_maharashtra, nb_goa, nb_dnh, nb_andhra_pradesh, nb_telangana,
-  nb_karnataka, nb_kerala, nb_tamil_nadu, nb_pondy, nb_bihar, nb_jharkhand,
-  nb_odisha, nb_west_bengal, nb_sikkim, nb_arunachal_pradesh, nb_assam,
-  nb_manipur, nb_meghalaya, nb_mizoram, nb_nagaland, nb_tripure
+  "Punjab"=nb_punjab, "Haryana"=nb_haryana,"Rajasthan"=nb_rajasthan, "Delhi"=nb_delhi, 
+  "UP"=nb_up, "Uttarakhand"=nb_uttarakhand,
+  "HP"=nb_hp, "J&K"=nb_jk, "Chandigarh" =nb_chandigarh, "Chhattisgarh"=nb_chhattisgarh, 
+  "Gujarat"=nb_gujarat,"MP"=nb_mp,
+  "Maharashtra" =nb_maharashtra, "GOA"=nb_goa, "DNH"=nb_dnh, "Andhra Pradesh"=nb_andhra_pradesh, 
+  "Telangana"=nb_telangana,
+  "Karnataka"=nb_karnataka,"Kerala"=nb_kerala, "Tamil Nadu"=nb_tamil_nadu, "Pondy"=nb_pondy, 
+  "Bihar"=nb_bihar, "Jharkhand"=nb_jharkhand,
+  "Odisha"=nb_odisha, "West Bengal"=nb_west_bengal, "Sikkim"=nb_sikkim, "Arunachal Pradesh"=nb_arunachal_pradesh, "Assam"=nb_assam,
+  "Manipur"=nb_manipur, "Meghalaya"=nb_meghalaya, "Mizoram"=nb_mizoram, "Nagaland"=nb_nagaland, "Tripura"=nb_tripure
 )
 
 normalized_energy <- data
-normalized_energy[, -1] <- t(t(data[, -1])/ nb_population)
-normalized_energy <- normalized_energy |> 
-  rename(Date=X)
+for(i in 1:nrow(normalized_energy)){
+  normalized_energy$Consommation[i] <- normalized_energy$Consommation[i] / nb_population[normalized_energy$Etat[i]][[1]]
+}
+
 
 # Afficher les premières lignes du dataframe normalisé
 head(normalized_energy)
@@ -137,10 +159,10 @@ Nous allons tout d'abord représenter simplement nos données pour pouvoir faire
 
 ```{r}
 # Utilisation de la fonction gather pour mettre en forme les données
-data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
+# data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
 
 # Création du graphique avec ggplot
-ggplot(data_long, aes(x = Date, y = Consommation, color = Etat)) +
+ggplot(normalized_energy, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
   theme_minimal()
@@ -158,7 +180,7 @@ Pour la courbe de température de longueur 365, on symétrise le signal à la fi
 
 ```{r}
 # Extraire la colonne de consommation (ajustez le nom de la colonne si nécessaire)
-y <- data_long$Consommation
+y <- normalized_energy$Consommation
 plot(y,type="l",main="signal de départ", ylab = "Consommation")
 
 # Créer un signal symétrisé
@@ -172,23 +194,9 @@ plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation")
 abline(v = 33*365, lty = 2)
 ```
 
-Nous allons à présent travailler sur le signal symétrisé. \
+# A VOIR
 
-Pour pouvoir procéder à une **décomposition dans une base d'ondelettes avec x moments nuls**, nous allons tester plusieurs valeurs pour pouvoir s'approcher du nombre optimal de moments nuls. 
-
-
-```{r}
-# Décomposition en ondelettes avec 8 moments nuls (ajustez le nombre si nécessaire)
-coefs <- wd(ysym, filter.number = 8, family = "DaubLeAsymm")
-
-# Tracer les coefficients d'ondelettes
-plot(coefs, scaling = "by.level")
-```
-# A FAIRE 
-- ne pas normaliser les données
-- réduire les données (soustraire la moyenne)
-- choisir bases de fourier avec bcp de noeuds (attention à ne pas faire de sur-apprentissage)
-- choisir bases de splines avec régression pénalisée pour pouvoir faire l'ACP
+regarder si ce qu'on a fait ce serait pas mieux avec l'autre BD
 
 
 
