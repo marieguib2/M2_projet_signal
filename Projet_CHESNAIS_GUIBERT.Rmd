@@ -21,24 +21,35 @@ Notre étude porte sur l'analyse de la consommation d'énergie dans les 33 Etats
 Dans un premier temps, nous allons importer les données.
 
 ```{r}
-data <- read.csv("long_data.csv")
+data <- read.csv("long_data.csv", stringsAsFactors = T)
 
 colnames(data) <- c("Etat", "Regions", "latitude", "longitude", "Date", "Consommation")
 data <- data[,-c(3,4)]
-data$Etat <- as.factor(data$Etat)
 summary(data)
 # View(data)
 ```
 
 Grâce à ce résumé statistique, nous pouvons voir que les valeurs de nos données sont assez étendues.\
-En effet, certains pays présentent des valeurs assez faibles (inférieures à 1) alors que certains pays ont des données 10 fois plus importantes comme le ... par exemple. \
-Nous allons donc normaliser les données par le nombre d'habitants pour avoir des données cohérentes.
+
+```{r}
+data$Etat[which.max(data$Consommation)]
+data$Etat[which.min(data$Consommation)]
+```
+
+En effet, certaines valeurs journalières sont très faibles (inférieures à 1) alors que d'autres sont 500 fois plus élevées. Par exemple, le Maharashtra qui présente certaines valeurs très importantes en opposition avec le Sikkim. 
+
+Concernant notre base de données, elle décrit la consommation d'énergie dans **33 Etats** d'Inde entre 2019 et 2020. \
+Nous avons 16 599 lignes, soit **503 points de mesure** par pays (503*33). Les données sont journalières, exprimées en Mega Units.
 
 ```{r}
 dim(data)
 ```
-Cette base de données décrit la consommation d'énergie dans **33 Etats** d'Inde entre 2019 et 2020. \
-Nous avons 503 lignes, soit **503 points de mesure**. Les données journalières, exprimées en Mega Units et chaque Etat représente une colonne.
+
+
+Au départ, nous avons voulu normaliser les données par le nombre d'habitants de chaque Etat. Cependant, cette méthode s'est révélée problématique car nous avons obtenu des valeurs très proches de zéro, ce qui aurait compliqué les calculs.
+
+Nous avons donc choisi de réduire les données de consommation, en soustrayant la moyenne, pour continuer notre analyse avec données moins disproportionnées.
+
 
 
 ## Choix de la période étudiée
