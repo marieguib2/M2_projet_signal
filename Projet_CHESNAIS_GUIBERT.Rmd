@@ -345,7 +345,7 @@ plot(tps,y,type="l", main = "Consommation d'énergie du Punjab")
 
 ```{r,message=FALSE,warning=FALSE}
 splbasis = create.bspline.basis(rangeval = c(1,356),
-                                norder=6, 
+                                norder=4, 
                                 breaks=c(1:25))
 # définition une base de B-spline entre 1 et 356 (les dates) 
 # ordre 4 (classique) 
@@ -390,15 +390,19 @@ Nous représentons sur un même graphe les observations et la fonction estimée 
 plotfit.fd(y,# valeur de PH pour un pays
            tps, # les dates
            smoothdata$fd, # nos données estimées
+           # 1 à 356 
            pch=20,
            cex=0.5,
            main="les observations et la fonction estimée reconstruite ˆf",
            xlab = "PH",
            ylab="temps")
 ```
+On a représenté les points et l'objet fonctionnel. 
 
-
-On représente les points et l'objet fonctionnel:
+# IDEE :
+la prof a dit que ça dépendait de nos objectifs. Comme on a pas une base d'ondelettes, est-ce qu'on va réellement pouvoir reproduire le signal ?
+Donc notre objectif ça pourrait être d'avoir un signal "+ lisse" ?
+à voir
 
 ```{r}
 fhatprim = eval.fd(tps,smoothdata$fd,Lfdobj=1) # dérivé première
@@ -410,12 +414,69 @@ matplot(tps,cbind(fhatprim,fhatpprim),type="l")
 La dérivée première est en noir et la dérivée seconde en rouge.
 
 
+### Lissage de l'ensemble des trajectoires
+
+Nous allons lisser une par une les signaux de chaque Etats.
+
+# PROBLEME ICI A REVOIR 
+
+```{r}
+splbasis = create.bspline.basis(rangeval = c(1,356),
+                                norder=4, 
+                                breaks=c(1:25))
+
+gcv = matrix(0, nrow = 30, ncol = 34) # 30 valeur pour chacun des 33 etats
+for(e in 2:34){ # Pour chacun des Etats
+  for (i in 1:30){
+    y <- as.vector(t(unlist(data_long[, e])))
+    lambda = exp(i-10)
+    fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+    smoothdata = smooth.basis(tps,y,fdParobj = fdparTemp) # Plus un seul individu mais plusieurs individu
+    gcv[i,e] = mean(smoothdata$gcv) 
+  # avant un critère de VC pour chaque individu
+  # maintenant comme n courbes donc n valeur de critère pour un lambda donné
+  # donc moyenne des critères de VC
+  }
+}
+plot(gcv)
+which.min(gcv)
+```
+
+```{r}
+lambda = exp(which.min(gcv)-10)
+fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+smoothdata = smooth.basis(age,growth$hgtm,fdParobj = fdparTemp)
+```
+
+plotfit.fd --\> un graphique par individu (moins bien)
+
+[Représentation des données brutes et des données lisses]{.underline}
+
+```{r}
+fhatsmooth = eval.fd(age,smoothdata$fd) # on évalue notre objet fonctionnel sur nos âge
+
+par(mfrow=c(1,2))
+matplot(tps,growth$hgtm,type="p",lty=1,ylab="",main="donnees brutes")
+matplot(tps,fhatsmooth,type="p",lty=1,ylab="",main="donnees lissees")
+```
+
+Très proche
+
+la différence que l'on voit pas est ?
+
+[Représentation des résidus]{.underline}
+
+```{r}
+matplot(age,fhatsmooth-growth$hgtm,lty=1,type="l",ylab="residus")
+```
+
+
+
 
 # A FAIRE
 
 base de spline pénalisé
 
-vérifier pourquoi c'est pas 356
 
 
 # Sources 
