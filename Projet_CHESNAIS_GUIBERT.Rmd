@@ -231,7 +231,7 @@ data |>
   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie pour les Etats du Sud de l'inde") +
   theme_minimal()
 
-data_complete_reg |> 
+data |> 
   filter(Regions=="WR") |> 
   ggplot(aes(x = Date, y = Consommation,color = Etat)) +
   geom_line() +
@@ -277,18 +277,18 @@ Nous représentons le signal pour un Etat (ici le Punjab) :
 ```{r}
 i = 2
 y <- as.vector(t(unlist(data_long[, i])))
-
-plot(1:356,y,type="l",main="Signal de départ", ylab = "Consommation", xlab="Jour")
-
-# Créer un signal symétrisé
-ysym = c(y, rev(tail(y, n= 512-length(y)))) # on choisit 512 pour avoir une puissance de 2
-
-# Tracer le signal symétrisé
-plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation", xlab = "Jour")
-
-# Ajouter une ligne verticale à la position 
-# axe de symétrie : 361 jours 
-abline(v = 356, lty = 2)
+# 
+# plot(1:356,y,type="l",main="Signal de départ", ylab = "Consommation", xlab="Jour")
+# 
+# # Créer un signal symétrisé
+# ysym = c(y, rev(tail(y, n= 512-length(y)))) # on choisit 512 pour avoir une puissance de 2
+# 
+# # Tracer le signal symétrisé
+# plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation", xlab = "Jour")
+# 
+# # Ajouter une ligne verticale à la position 
+# # axe de symétrie : 361 jours 
+# abline(v = 356, lty = 2)
 ```
 
 # CONTINUER A COMMENTER PLUS TARD
@@ -316,23 +316,33 @@ plot(tps,y,type="l", main = "Consommation d'énergie du Chhattisgarh")
 
 
 ```{r,message=FALSE,warning=FALSE}
-splbasis = create.bspline.basis(rangeval = c(1,356),
-                                norder=4, 
-                                breaks=c(1:25))
+splbasis = create.bspline.basis(rangeval = c(min(data$Consommation),max(data$Consommation)),
+                                norder=6, 
+                                breaks=seq(min(data$Consommation),
+                                           max(data$Consommation),length=35))
 # définition une base de B-spline entre 1 et 356 (les dates) 
 # ordre 4 (classique) 
 # breaks : coupure
 
+
+plot(splbasis)
+```
+```{r}
+summary(splbasis)
+```
+
+
+```{r}
 # On fait l'ajustement pour différentes valeurs de lambda pour minimiser le critère de pénalité
 # On veut la fonction la plus proche des points et la moins oscillante grâce à la pénalité
 
-gcv = rep(0,30) # grille de lambda
+gcv = rep(0,50) # grille de lambda
 
-for (i in 1:30){
+for (i in 1:50){
   
   lambda = exp(i-10)
   
-  fdpar = fdPar(splbasis,Lfdobj = 2,lambda=lambda) # calcul de la valeur de pénalité
+  fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) # calcul de la valeur de pénalité
   # Lfdoj = 2 : ordre de la dérivée dans la pénalité (dérivée seconde)
   
   smoothdata = smooth.basis(tps,y, fdParobj = fdpar) # ajustement de l'objet fonctionnel
@@ -346,15 +356,15 @@ plot(gcv)
 which.min(gcv)
 ```
 
-Nous avons observé que la valeur optimale de lambda est la 13ème valeur, correspondant au minimum. Cette valeur nous permettra d'être proche des données observées. \
-Nous avons choisi de paramétrer le nombre de coupures entre 1 et 25 car les signaux sont très irréguliers et nous souhaitons être  proche, raisonnablement, du signal d'origine. Ce choix est arbitraire car il peut engendrer du sur-apprentissage si le nombre de coupures est trop élevée par rapport au signal de départ.
+Nous avons observé que la valeur optimale de lambda est la 4ème valeur, correspondant au minimum. Cette valeur nous permettra d'être proche des données observées. \
+Nous avons choisi de paramétrer le nombre de coupures à 35 car les signaux sont très irréguliers et nous souhaitons être  proche, raisonnablement, du signal d'origine. Ce choix est arbitraire car il peut engendrer du sur-apprentissage si le nombre de coupures est trop élevée par rapport au signal de départ.
 
 
 Nous allons recalculer la pénalité et refaire le lissage avec la valeur de lambda minimale : 
 
 ```{r}
 lambda = exp(which.min(gcv)-10)
-fdpar = fdPar(splbasis,Lfdobj = 2,lambda=lambda) # calcul pénalité
+fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) # calcul pénalité
 smoothdata = smooth.basis(tps,y,fdParobj = fdpar) # lissage
 ```
 
@@ -368,8 +378,9 @@ plotfit.fd(y,# valeur de consommation pour un pays
            pch=20,
            cex=0.5,
            main="les observations et la fonction estimée reconstruite ˆf",
-           xlab = "consommation d'énergie",
-           ylab="temps")
+           ylab = "consommation d'énergie",
+           xlab="temps",
+           xlim = c(0,356))
 ```
 On a représenté les points et l'objet fonctionnel. 
 
@@ -388,68 +399,11 @@ matplot(tps,cbind(fhatprim,fhatpprim),type="l")
 La dérivée première est en noir et la dérivée seconde en rouge.
 
 
-### Lissage de l'ensemble des trajectoires
-
-Nous allons lisser une par une les signaux de chaque Etats.
-
-# PROBLEME ICI A REVOIR 
+# Moyenne et variance
 
 ```{r}
-splbasis = create.bspline.basis(rangeval = c(1,356),
-                                norder=4, 
-                                breaks=c(1:25))
-
-gcv = matrix(0, nrow = 30, ncol = 34) # 30 valeur pour chacun des 33 etats
-for(e in 2:34){ # Pour chacun des Etats
-  for (i in 1:30){
-    y <- as.vector(t(unlist(data_long[, e])))
-    lambda = exp(i-10)
-    fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
-    smoothdata = smooth.basis(tps,y,fdParobj = fdparTemp) # Plus un seul individu mais plusieurs individu
-    gcv[i,e] = mean(smoothdata$gcv) 
-  # avant un critère de VC pour chaque individu
-  # maintenant comme n courbes donc n valeur de critère pour un lambda donné
-  # donc moyenne des critères de VC
-  }
-}
-plot(gcv)
-which.min(gcv)
+mean
 ```
-
-```{r}
-lambda = exp(which.min(gcv)-10)
-fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
-smoothdata = smooth.basis(age,growth$hgtm,fdParobj = fdparTemp)
-```
-
-plotfit.fd --\> un graphique par individu (moins bien)
-
-[Représentation des données brutes et des données lisses]{.underline}
-
-```{r}
-fhatsmooth = eval.fd(age,smoothdata$fd) # on évalue notre objet fonctionnel sur nos âge
-
-par(mfrow=c(1,2))
-matplot(tps,growth$hgtm,type="p",lty=1,ylab="",main="donnees brutes")
-matplot(tps,fhatsmooth,type="p",lty=1,ylab="",main="donnees lissees")
-```
-
-Très proche
-
-la différence que l'on voit pas est ?
-
-[Représentation des résidus]{.underline}
-
-```{r}
-matplot(age,fhatsmooth-growth$hgtm,lty=1,type="l",ylab="residus")
-```
-
-
-
-
-# A FAIRE
-
-base de spline pénalisé
 
 
 
