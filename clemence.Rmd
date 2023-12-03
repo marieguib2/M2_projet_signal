@@ -299,6 +299,47 @@ y <- as.vector(t(unlist(data_long[, i])))
 
 ## Lissage d'une trajectoire
 
+```{r, message=FALSE, warning=FALSE}
+# Initialisation d'une matrice pour stocker les résultats pour chaque colonne
+smoothed_data <- list()
+
+for (i in 2:34) {
+  y <- as.vector(t(unlist(data_long[, i]))) # Sélectionne chaque colonne individuellement
+  
+  splbasis <- create.bspline.basis(rangeval = c(min(data$Consommation),max(data$Consommation)),
+                                    norder = 6,
+                                    breaks=seq(min(data$Consommation),
+                                           max(data$Consommation),length=35))
+  
+  gcv <- rep(0, 50) # Grille de lambda
+  
+  for (j in 1:50) {
+    lambda = exp(j - 10)
+    
+    fdpar = fdPar(splbasis, Lfdobj = 4, lambda = lambda)
+    smoothdata = smooth.basis(tps, y, fdParobj = fdpar)
+    
+    gcv[j] = smoothdata$gcv
+  }
+  
+  lambda = exp(which.min(gcv) - 10)
+  fdpar = fdPar(splbasis, Lfdobj = 4, lambda = lambda)
+  smoothdata = smooth.basis(tps, y, fdParobj = fdpar)
+  
+  # Stocke les résultats dans la matrice
+  smoothed_data[[i-1]] <- smoothdata$fd
+}
+
+# Maintenant, smoothed_data contient les données lissées pour les 33 colonnes
+
+```
+
+```{r}
+matplot(smoothed_data)
+```
+
+
+
 ```{r}
 y <- as.vector(t(unlist(data_long[, i]))) # courbe du premier Etat : Punjab
 tps <- 1:356
@@ -323,10 +364,9 @@ splbasis = create.bspline.basis(rangeval = c(min(data$Consommation),max(data$Con
 # définition une base de B-spline entre 1 et 356 (les dates) 
 # ordre 4 (classique) 
 # breaks : coupure
-
-
 plot(splbasis)
 ```
+
 ```{r}
 summary(splbasis)
 ```
@@ -373,7 +413,7 @@ Nous représentons sur un même graphe les observations et la fonction estimée 
 ```{r,message=FALSE,warning=FALSE}
 plotfit.fd(y,# valeur de consommation pour un pays
            tps, # les dates
-           smoothdata$fd, # nos données estimées
+           smoothdata, # nos données estimées
            # 1 à 356 
            pch=20,
            cex=0.5,
@@ -390,9 +430,9 @@ Donc notre objectif ça pourrait être d'avoir un signal "+ lisse" ?
 à voir
 
 ```{r}
-fhatprim = eval.fd(tps,smoothdata$fd,Lfdobj=1) # dérivé première
+fhatprim = eval.fd(tps,smoothed_data,Lfdobj=1) # dérivé première
 # eval.fd : évalue sur les dates
-fhatpprim = eval.fd(tps,smoothdata$fd,Lfdobj=2) # dérivé seconde
+fhatpprim = eval.fd(tps,smoothed_data,Lfdobj=2) # dérivé seconde
 matplot(tps,cbind(fhatprim,fhatpprim),type="l")
 ```
 
@@ -424,14 +464,14 @@ mean_smooth_data
 ```
 
 ```{r}
-ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
-  geom_line() +
-  geom_line(x mean_smooth_data)+
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat") +
-  theme_minimal()
+# ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
+#   geom_line() +
+#   geom_line(aes(x = mean_smooth_data$fdnames$time, y = mean_smooth_data$params))+
+#   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat") +
+#   theme_minimal()
 
-# matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
-# lines(mean_smooth_data,lwd=2)
+matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
+lines(mean_smooth_data,lwd=2)
 ```
 ### Ecart-type fonctionnel
 
