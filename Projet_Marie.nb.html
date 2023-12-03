@@ -1757,10 +1757,12 @@ d’énergie en Inde</h1>
 <h1>Environnement de travail</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5saWJyYXJ5KGdncGxvdDIpXG5saWJyYXJ5KHJlYWR4bClcbmBgYCJ9 -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5saWJyYXJ5KGdncGxvdDIpXG5saWJyYXJ5KHJlYWR4bClcbmxpYnJhcnkodGlkeXIpXG5saWJyYXJ5KGZkYSlcbmBgYCJ9 -->
 <pre class="r"><code>library(tidyverse)
 library(ggplot2)
-library(readxl)</code></pre>
+library(readxl)
+library(tidyr)
+library(fda)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
@@ -1770,13 +1772,13 @@ library(readxl)</code></pre>
 <p>Notre étude porte sur l’analyse de la consommation d’énergie dans les
 33 Etats d’Inde. Il est à noter que l’Inde est le troisième producteur
 et le troisième consommateur d’électricité au monde.</p>
-<div id="import-des-données" class="section level2">
-<h2>Import des données</h2>
+<div id="importation-des-données" class="section level2">
+<h2>Importation des données</h2>
 <p>Dans un premier temps, nous allons importer les données.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YSA8LSByZWFkLmNzdihcImxvbmdfZGF0YS5jc3ZcIiwgc3RyaW5nc0FzRmFjdG9ycyA9IFQpXG5cbmNvbG5hbWVzKGRhdGEpIDwtIGMoXCJFdGF0XCIsIFwiUmVnaW9uc1wiLCBcImxhdGl0dWRlXCIsIFwibG9uZ2l0dWRlXCIsIFwiRGF0ZVwiLCBcIkNvbnNvbW1hdGlvblwiKVxuZGF0YSA8LSBkYXRhWywtYygzLDQpXVxuc3VtbWFyeShkYXRhKVxuIyBWaWV3KGRhdGEpXG5gYGAifQ== -->
-<pre class="r"><code>data &lt;- read.csv(&quot;long_data.csv&quot;, stringsAsFactors = T)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YSA8LSByZWFkLmNzdihcImxvbmdfZGF0YV8yLmNzdlwiLCBzdHJpbmdzQXNGYWN0b3JzID0gVCxzZXAgPSBcIjtcIilcblxuY29sbmFtZXMoZGF0YSkgPC0gYyhcIkV0YXRcIiwgXCJSZWdpb25zXCIsIFwibGF0aXR1ZGVcIiwgXCJsb25naXR1ZGVcIiwgXCJEYXRlXCIsIFwiQ29uc29tbWF0aW9uXCIpXG5kYXRhIDwtIGRhdGFbLC1jKDMsNCldXG5zdW1tYXJ5KGRhdGEpXG4jIFZpZXcoZGF0YSlcbmBgYCJ9 -->
+<pre class="r"><code>data &lt;- read.csv(&quot;long_data_2.csv&quot;, stringsAsFactors = T,sep = &quot;;&quot;)
 
 colnames(data) &lt;- c(&quot;Etat&quot;, &quot;Regions&quot;, &quot;latitude&quot;, &quot;longitude&quot;, &quot;Date&quot;, &quot;Consommation&quot;)
 data &lt;- data[,-c(3,4)]
@@ -1786,7 +1788,8 @@ summary(data)
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>Grâce à ce résumé statistique, nous pouvons voir que les valeurs de
-nos données sont assez étendues.<br />
+nos données de consommation d’énergie sont assez étendues : elles sont
+comprises entre 0.3 et 522.1 Méga Units.<br />
 </p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
@@ -1803,8 +1806,8 @@ en opposition avec le Sikkim.</p>
 <p>Concernant notre base de données, elle décrit la consommation
 d’énergie dans <strong>33 Etats</strong> d’Inde entre 2019 et
 2020.<br />
-Nous avons 16 599 lignes, soit <strong>503 points de mesure</strong> par
-pays (503*33). Les données sont journalières, exprimées en Mega
+Nous avons 16 434 lignes, soit <strong>498 points de mesure</strong> par
+pays (498*33). Les données sont journalières, exprimées en Mega
 Units.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
@@ -1820,14 +1823,14 @@ Units.</p>
 poursuivre l’étude correctement.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YSREYXRlIDwtIGFzLkRhdGUoZGF0YSREYXRlLCBmb3JtYXQgPSBcIiVkLyVtLyVZICVIOiVNOiVTXCIpXG5zdHIoZGF0YSkgIyBWw6lyaWZpY2F0aW9uXG5gYGAifQ== -->
-<pre class="r"><code>data$Date &lt;- as.Date(data$Date, format = &quot;%d/%m/%Y %H:%M:%S&quot;)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YSREYXRlIDwtIGFzLkRhdGUoZGF0YSREYXRlLCBmb3JtYXQgPSBcIiVkLyVtLyVZICVIOiVNXCIpXG5zdHIoZGF0YSkgIyBWw6lyaWZpY2F0aW9uXG5gYGAifQ== -->
+<pre class="r"><code>data$Date &lt;- as.Date(data$Date, format = &quot;%d/%m/%Y %H:%M&quot;)
 str(data) # Vérification</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>Pour simplifier notre analyse, nous allons nous concentrer seulement
-sur une seule année :</p>
+sur l’année 2019 :</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YSA8LSBkYXRhIHw+IFxuICBmaWx0ZXIoRGF0ZSA8PSBhcy5EYXRlKFwiMjAyMC0wMS0wMlwiKSlcbmBgYCJ9 -->
@@ -1880,14 +1883,10 @@ Nous allons donc travailler avec les valeurs initiales.</p>
 pouvoir faire ressortir les informations importantes.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBVdGlsaXNhdGlvbiBkZSBsYSBmb25jdGlvbiBnYXRoZXIgcG91ciBtZXR0cmUgZW4gZm9ybWUgbGVzIGRvbm7DqWVzXG4jIGRhdGFfbG9uZyA8LSB0aWR5cjo6Z2F0aGVyKG5vcm1hbGl6ZWRfZW5lcmd5LCBrZXkgPSBcIkV0YXRcIiwgdmFsdWUgPSBcIkNvbnNvbW1hdGlvblwiLCAtRGF0ZSlcblxuIyBDcsOpYXRpb24gZHUgZ3JhcGhpcXVlIGF2ZWMgZ2dwbG90XG5nZ3Bsb3QoZGF0YSwgYWVzKHggPSBEYXRlLCB5ID0gQ29uc29tbWF0aW9uLCBjb2xvciA9IEV0YXQpKSArXG4gIGdlb21fbGluZSgpICtcbiAgbGFicyh4ID0gXCJEYXRlXCIsIHkgPSBcIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llXCIsIHRpdGxlID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBwYXIgw6l0YXRcIikgK1xuICB0aGVtZV9taW5pbWFsKClcbmBgYCJ9 -->
-<pre class="r"><code># Utilisation de la fonction gather pour mettre en forme les données
-# data_long &lt;- tidyr::gather(normalized_energy, key = &quot;Etat&quot;, value = &quot;Consommation&quot;, -Date)
-
-# Création du graphique avec ggplot
-ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2dwbG90KGRhdGEsIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBFdGF0KSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIEV0YXRcIikgK1xuICB0aGVtZV9taW5pbWFsKClcbmBgYCJ9 -->
+<pre class="r"><code>ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par état&quot;) +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par Etat&quot;) +
   theme_minimal()</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
@@ -1895,23 +1894,26 @@ ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
 <p>Ce graphique nous montre que nos données sont très
 irrégulières.<br />
 </p>
-<p>[Représentation des données en deux parties].{underline}</p>
-<p>Pour pouvoir que les informations soient plus lisibles, nous avons
-décidé de séparer en plusieurs parties nos données.<br />
-Nous avons fixé des seuils par rapport à la moyenne de consommations des
-Etats pour réaliser ces graphiques.</p>
+<p>[Représentation des données en différentes parties].{underline}</p>
+<p>Pour que les informations soient plus lisibles, nous avons décidé de
+séparer en plusieurs parties nos données. Nous avons fixé des seuils par
+rapport à la moyenne de consommations des Etats pour réaliser ces
+graphiques.</p>
+<p>[Calcul de la moyenne par Etat].{underline}</p>
 <p>On calcule d’abord la moyenne par Etat et on ajoute cette moyenne a
 un nouveau dataframe :</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubW95ZW5uZV9wYXJfZXRhdCA8LSB0YXBwbHkoZGF0YSRDb25zb21tYXRpb24sIGRhdGEkRXRhdCwgbWVhbilcbm1veWVubmVfcGFyX2V0YXQgPC0gZGF0YS5mcmFtZShFdGF0ID0gbmFtZXMobW95ZW5uZV9wYXJfZXRhdCksIE1veWVubmUgPSBtb3llbm5lX3Bhcl9ldGF0KVxuXG5kYXRhX2NvbXBsZXRlIDwtIG1lcmdlKGRhdGEsbW95ZW5uZV9wYXJfZXRhdCwgYnkgPSBcIkV0YXRcIikgXG5gYGAifQ== -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubW95ZW5uZV9wYXJfZXRhdCA8LSB0YXBwbHkoZGF0YSRDb25zb21tYXRpb24sIGRhdGEkRXRhdCwgbWVhbilcbm1veWVubmVfcGFyX2V0YXQgPC0gZGF0YS5mcmFtZShFdGF0ID0gbmFtZXMobW95ZW5uZV9wYXJfZXRhdCksIE1veWVubmUgPSBtb3llbm5lX3Bhcl9ldGF0KVxuXG5kYXRhX2NvbXBsZXRlIDwtIG1lcmdlKGRhdGEsbW95ZW5uZV9wYXJfZXRhdCwgYnkgPSBcIkV0YXRcIikgXG5oZWFkKGRhdGFfY29tcGxldGUpXG5gYGAifQ== -->
 <pre class="r"><code>moyenne_par_etat &lt;- tapply(data$Consommation, data$Etat, mean)
 moyenne_par_etat &lt;- data.frame(Etat = names(moyenne_par_etat), Moyenne = moyenne_par_etat)
 
-data_complete &lt;- merge(data,moyenne_par_etat, by = &quot;Etat&quot;) </code></pre>
+data_complete &lt;- merge(data,moyenne_par_etat, by = &quot;Etat&quot;) 
+head(data_complete)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p>[Séparation de notre jeu de données].{underline}</p>
 <p>On sépare les données en 3 catégories :</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
@@ -1930,100 +1932,68 @@ data_sup &lt;- data_complete |&gt;
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p><a href="#représentations-graphiques">Représentations
+graphiques</a>.{underline}</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2dwbG90KGRhdGFfaW5mLCBhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sIGNvbG9yID0gRXRhdCkpICtcbiAgZ2VvbV9saW5lKCkgK1xuICBsYWJzKHggPSBcIkRhdGVcIiwgeSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWVcIiwgdGl0bGUgPSBcIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIHBhciDDqXRhdFwiLCBzdWJ0aXRsZSA9IFwiUGF5cyBjb25zb21tYW50IG1vaW5zIGRlIDUwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKVxuXG5nZ3Bsb3QoZGF0YV9tb3ksIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBFdGF0KSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIMOpdGF0XCIsIHN1YnRpdGxlID0gXCJQYXlzIGNvbnNvbW1hbnQgZW50cmUgNTAgZXQgMjAwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKVxuXG5nZ3Bsb3QoZGF0YV9zdXAsIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBFdGF0KSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIMOpdGF0XCIsIHN1YnRpdGxlID0gXCJQYXlzIGNvbnNvbW1hbnQgcGx1cyBkZSAyMDAgTWVnYSBVbml0cyBlbiBtb3llbm5lXCIpICtcbiAgdGhlbWVfbWluaW1hbCgpXG5gYGAifQ== -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2dwbG90KGRhdGFfaW5mLCBhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sIGNvbG9yID0gRXRhdCkpICtcbiAgZ2VvbV9saW5lKCkgK1xuICBsYWJzKHggPSBcIkRhdGVcIiwgeSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWVcIiwgdGl0bGUgPSBcIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIHBhciBFdGF0XCIsIHN1YnRpdGxlID0gXCJFdGF0cyBjb25zb21tYW50IG1vaW5zIGRlIDUwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKVxuXG5nZ3Bsb3QoZGF0YV9tb3ksIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBFdGF0KSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIEV0YXRcIiwgc3VidGl0bGUgPSBcIkV0YXRzIGNvbnNvbW1hbnQgZW50cmUgNTAgZXQgMjAwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKVxuXG5nZ3Bsb3QoZGF0YV9zdXAsIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBFdGF0KSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIEV0YXRcIiwgc3VidGl0bGUgPSBcIkV0YXRzIGNvbnNvbW1hbnQgcGx1cyBkZSAyMDAgTWVnYSBVbml0cyBlbiBtb3llbm5lXCIpICtcbiAgdGhlbWVfbWluaW1hbCgpXG5gYGAifQ== -->
 <pre class="r"><code>ggplot(data_inf, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par état&quot;, subtitle = &quot;Pays consommant moins de 50 Mega Units en moyenne&quot;) +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par Etat&quot;, subtitle = &quot;Etats consommant moins de 50 Mega Units en moyenne&quot;) +
   theme_minimal()
 
 ggplot(data_moy, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par état&quot;, subtitle = &quot;Pays consommant entre 50 et 200 Mega Units en moyenne&quot;) +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par Etat&quot;, subtitle = &quot;Etats consommant entre 50 et 200 Mega Units en moyenne&quot;) +
   theme_minimal()
 
 ggplot(data_sup, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par état&quot;, subtitle = &quot;Pays consommant plus de 200 Mega Units en moyenne&quot;) +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par Etat&quot;, subtitle = &quot;Etats consommant plus de 200 Mega Units en moyenne&quot;) +
   theme_minimal()</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p><u>Représentation selon la région</u></p>
-<p>L’inde est divisé en 5 regions : le Nord (NR), Nord-Est (NER), le Sud
-(SR), l’Est (ER) et l’Ouest (WR) Nous traçons les consommations en
-fonction des régions (une couleur par région)</p>
-<p>Nous calculons les moyennes des consommations par Regions:</p>
+<p>Grâce à ces représentations, il est plus facile d’observer et
+d’étudier l’allure de nos données.<br />
+</p>
+<p>Pour la plupart des Etats, leur consommation varie beaucoup tout au
+long de l’année et en quelques jours leur consommation peut doubler ou
+bien diminuer subitement.</p>
+<p>Cependant certains Etats comme le Tripura possède une consommation
+très faible, et peu de variations dans son signal sont observées :</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubW95ZW5uZV9wYXJfcmVnIDwtIHRhcHBseShkYXRhJENvbnNvbW1hdGlvbiwgZGF0YSRSZWdpb25zLCBtZWFuKVxubW95ZW5uZV9wYXJfcmVnIDwtIGRhdGEuZnJhbWUoUmVnaW9ucyA9IG5hbWVzKG1veWVubmVfcGFyX3JlZyksIE1veWVubmVfcmVnID0gbW95ZW5uZV9wYXJfcmVnKVxuIyBcbmRhdGFfY29tcGxldGVfcmVnIDwtIG1lcmdlKGRhdGFfY29tcGxldGUsbW95ZW5uZV9wYXJfcmVnLCBieSA9IFwiUmVnaW9uc1wiKVxuYGBgIn0= -->
-<pre class="r"><code>moyenne_par_reg &lt;- tapply(data$Consommation, data$Regions, mean)
-moyenne_par_reg &lt;- data.frame(Regions = names(moyenne_par_reg), Moyenne_reg = moyenne_par_reg)
-# 
-data_complete_reg &lt;- merge(data_complete,moyenne_par_reg, by = &quot;Regions&quot;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YV9pbmYgPC0gZGF0YV9jb21wbGV0ZV9yZWcgfD4gXG4gIGZpbHRlcihNb3llbm5lX3JlZyA8PSA2NilcbiMgZGF0YV9pbmZcblxuZGF0YV9tb3kgPC0gZGF0YV9jb21wbGV0ZV9yZWcgfD4gXG4gIGZpbHRlcihNb3llbm5lX3JlZyA+IDY2ICYgTW95ZW5uZV9yZWcgPCAxNTApXG4jIGRhdGFfbW95XG5cbmRhdGFfc3VwIDwtIGRhdGFfY29tcGxldGVfcmVnIHw+IFxuICBmaWx0ZXIoTW95ZW5uZV9yZWcgPj0gMTUwKVxuIyBkYXRhX3N1cFxuYGBgIn0= -->
-<pre class="r"><code>data_inf &lt;- data_complete_reg |&gt; 
-  filter(Moyenne_reg &lt;= 66)
-# data_inf
-
-data_moy &lt;- data_complete_reg |&gt; 
-  filter(Moyenne_reg &gt; 66 &amp; Moyenne_reg &lt; 150)
-# data_moy
-
-data_sup &lt;- data_complete_reg |&gt; 
-  filter(Moyenne_reg &gt;= 150)
-# data_sup</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2dwbG90KGRhdGEsIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBSZWdpb25zKSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIMOpdGF0XCIpICtcbiAgdGhlbWVfbWluaW1hbCgpXG5gYGAifQ== -->
-<pre class="r"><code>ggplot(data, aes(x = Date, y = Consommation, color = Regions)) +
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YSB8PiBcbiAgZmlsdGVyKEV0YXQ9PVwiVHJpcHVyYVwiKSB8PiBcbiAgZ2dwbG90KGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbikpICtcbiAgZ2VvbV9saW5lKCkgK1xuICBsYWJzKHggPSBcIkRhdGVcIiwgeSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWVcIiwgdGl0bGUgPSBcIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIHBhciBFdGF0XCIsIHN1YnRpdGxlID0gXCJFdGF0cyBjb25zb21tYW50IG1vaW5zIGRlIDUwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKVxuYGBgIn0= -->
+<pre class="r"><code>data |&gt; 
+  filter(Etat==&quot;Tripura&quot;) |&gt; 
+  ggplot(aes(x = Date, y = Consommation)) +
   geom_line() +
-  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par état&quot;) +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par Etat&quot;, subtitle = &quot;Etats consommant moins de 50 Mega Units en moyenne&quot;) +
   theme_minimal()</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p>Sa consommation varie entre 2.4 et 6.6 mega Units.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2dwbG90KGRhdGFfaW5mLCBhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sIGNvbG9yID0gUmVnaW9ucykpICtcbiAgZ2VvbV9saW5lKCkgK1xuICBsYWJzKHggPSBcIkRhdGVcIiwgeSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWVcIiwgdGl0bGUgPSBcIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIHBhciDDqXRhdFwiLCBzdWJ0aXRsZSA9IFwiUGF5cyBjb25zb21tYW50IG1vaW5zIGRlIDUwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKVxuXG5nZ3Bsb3QoZGF0YV9tb3ksIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBSZWdpb25zKSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIMOpdGF0XCIsIHN1YnRpdGxlID0gXCJQYXlzIGNvbnNvbW1hbnQgZW50cmUgNTAgZXQgMjAwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKVxuXG5nZ3Bsb3QoZGF0YV9zdXAsIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBSZWdpb25zKSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIMOpdGF0XCIsIHN1YnRpdGxlID0gXCJQYXlzIGNvbnNvbW1hbnQgcGx1cyBkZSAyMDAgTWVnYSBVbml0cyBlbiBtb3llbm5lXCIpICtcbiAgdGhlbWVfbWluaW1hbCgpXG5gYGAifQ== -->
-<pre class="r"><code>ggplot(data_inf, aes(x = Date, y = Consommation, color = Regions)) +
-  geom_line() +
-  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par état&quot;, subtitle = &quot;Pays consommant moins de 50 Mega Units en moyenne&quot;) +
-  theme_minimal()
-
-ggplot(data_moy, aes(x = Date, y = Consommation, color = Regions)) +
-  geom_line() +
-  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par état&quot;, subtitle = &quot;Pays consommant entre 50 et 200 Mega Units en moyenne&quot;) +
-  theme_minimal()
-
-ggplot(data_sup, aes(x = Date, y = Consommation, color = Regions)) +
-  geom_line() +
-  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie par état&quot;, subtitle = &quot;Pays consommant plus de 200 Mega Units en moyenne&quot;) +
-  theme_minimal()</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubWluKGRhdGEkQ29uc29tbWF0aW9uW2RhdGEkRXRhdD09XCJUcmlwdXJhXCJdKVxubWF4KGRhdGEkQ29uc29tbWF0aW9uW2RhdGEkRXRhdD09XCJUcmlwdXJhXCJdKVxuYGBgIn0= -->
+<pre class="r"><code>min(data$Consommation[data$Etat==&quot;Tripura&quot;])
+max(data$Consommation[data$Etat==&quot;Tripura&quot;])</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>Les représentations graphiques ne nous permettent pas de bien
-visualiser.</p>
+<p>A l’opposition du Punjab qui lui possède une très grande variation
+dans sa consommation :</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudGFwcGx5KGRhdGEkQ29uc29tbWF0aW9uLCBkYXRhJFJlZ2lvbnMsIG1lYW4pXG5gYGAifQ== -->
-<pre class="r"><code>tapply(data$Consommation, data$Regions, mean)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubWluKGRhdGEkQ29uc29tbWF0aW9uW2RhdGEkRXRhdD09XCJQdW5qYWJcIl0pXG5tYXgoZGF0YSRDb25zb21tYXRpb25bZGF0YSRFdGF0PT1cIlB1bmphYlwiXSlcbmBgYCJ9 -->
+<pre class="r"><code>min(data$Consommation[data$Etat==&quot;Punjab&quot;])
+max(data$Consommation[data$Etat==&quot;Punjab&quot;])</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>Nous observons une grande disparité entre les régions de l’Inde. En
-effet, le Nord-Est à une consommation très faible par rapport à
-l’Ouest.</p>
+<p><u>Tableau des moyennes de consommation par Etat</u></p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudGFwcGx5KGRhdGEkQ29uc29tbWF0aW9uLCBkYXRhJEV0YXQsIG1lYW4pXG5gYGAifQ== -->
@@ -2031,45 +2001,111 @@ l’Ouest.</p>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-</div>
-</div>
-<div id="lissage" class="section level1">
-<h1>Lissage</h1>
-<p>Puisque nos signaux sont irréguliers, nous avons choisi d’utiliser
-les ondelettes car elles ont des bonnes propriétés de compressions et
-sont adaptées à ce type de données.</p>
-<p>Pour la courbe de température de longueur 365, on symétrise le signal
-à la fin pour atteindre une longueur de 512. On se ramènera à la fin au
-signal de départ de taille 365.</p>
-</div>
-<div id="lissage-1" class="section level1">
-<h1>Lissage</h1>
-<p>Puisque nos signaux sont irréguliers, nous avons choisi d’utiliser
-les ondelettes car elles ont des bonnes propriétés de compressions et
-sont adaptées à ce type de données.</p>
-<p>Le problème ici est que la longueur des courbes de consommation n’est
-pas de la forme <span class="math inline">\(2^J\)</span>. Pour la courbe
-de température de longueur 365, on symétrise le signal à la fin pour
-atteindre une longueur de 512. On se ramènera à la fin au signal de
-départ de taille 365.</p>
+<p><u>Représentation selon la région</u></p>
+<p>L’Inde est divisée en 5 regions : le Nord (NR), Nord-Est (NER), le
+Sud (SR), l’Est (ER) et l’Ouest (WR) Nous allons tracer les
+consommations en fonction des régions (une couleur par région)./ De la
+même manière que les représentations précédentes, nous ne pouvons
+représenter les régions sur le même graphique. Sans diviser la
+représentation, il est difficile de bien observer les différences entre
+les régions.</p>
+<p>Nous décidons donc de représenter une région par graphique :</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YV9sb25nIDwtIGRhdGEgfD4gXG4gIHNlbGVjdCgtMilcblxuZGF0YV9sb25nIDwtIGRhdGFfbG9uZyB8PiBcbiAgcGl2b3Rfd2lkZXIobmFtZXNfZnJvbSA9IFwiRXRhdFwiLCB2YWx1ZXNfZnJvbSA9IFwiQ29uc29tbWF0aW9uXCIpXG5gYGAifQ== -->
-<pre class="r"><code>data_long &lt;- data |&gt; 
-  select(-2)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YSB8PiBcbiAgZmlsdGVyKFJlZ2lvbnM9PVwiRVJcIikgfD4gXG4gIGdncGxvdChhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sY29sb3IgPSBFdGF0KSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcG91ciBsZXMgRXRhdHMgZGUgbCdFc3QgZGUgbCdJbmRlXCIpICtcbiAgdGhlbWVfbWluaW1hbCgpXG5cbmRhdGEgfD4gXG4gIGZpbHRlcihSZWdpb25zPT1cIk5FUlwiKSB8PiBcbiAgZ2dwbG90KGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbixjb2xvciA9IEV0YXQpKSArXG4gIGdlb21fbGluZSgpICtcbiAgbGFicyh4ID0gXCJEYXRlXCIsIHkgPSBcIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llXCIsIHRpdGxlID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBwb3VyIGxlcyBFdGF0cyBkdSBOb3JkIEVzdCBkZSBsJ0luZGVcIikgK1xuICB0aGVtZV9taW5pbWFsKClcblxuZGF0YSB8PiBcbiAgZmlsdGVyKFJlZ2lvbnM9PVwiTlJcIikgfD4gXG4gIGdncGxvdChhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sY29sb3IgPSBFdGF0KSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcG91ciBsZXMgRXRhdHMgZHUgTm9yZCBkZSBsJ0luZGVcIikgK1xuICB0aGVtZV9taW5pbWFsKClcblxuZGF0YSB8PiBcbiAgZmlsdGVyKFJlZ2lvbnM9PVwiU1JcIikgfD4gXG4gIGdncGxvdChhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sY29sb3IgPSBFdGF0KSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcG91ciBsZXMgRXRhdHMgZHUgU3VkIGRlIGwnaW5kZVwiKSArXG4gIHRoZW1lX21pbmltYWwoKVxuXG5kYXRhX2NvbXBsZXRlX3JlZyB8PiBcbiAgZmlsdGVyKFJlZ2lvbnM9PVwiV1JcIikgfD4gXG4gIGdncGxvdChhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sY29sb3IgPSBFdGF0KSkgK1xuICBnZW9tX2xpbmUoKSArXG4gIGxhYnMoeCA9IFwiRGF0ZVwiLCB5ID0gXCJDb25zb21tYXRpb24gZCfDqW5lcmdpZVwiLCB0aXRsZSA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcG91ciBsZXMgRXRhdHMgZGUgbCdPdWVzdCBkZSBsJ0luZGVcIikgK1xuICB0aGVtZV9taW5pbWFsKClcblxuYGBgIn0= -->
+<pre class="r"><code>data |&gt; 
+  filter(Regions==&quot;ER&quot;) |&gt; 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie pour les Etats de l&#39;Est de l&#39;Inde&quot;) +
+  theme_minimal()
 
-data_long &lt;- data_long |&gt; 
-  pivot_wider(names_from = &quot;Etat&quot;, values_from = &quot;Consommation&quot;)</code></pre>
+data |&gt; 
+  filter(Regions==&quot;NER&quot;) |&gt; 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie pour les Etats du Nord Est de l&#39;Inde&quot;) +
+  theme_minimal()
+
+data |&gt; 
+  filter(Regions==&quot;NR&quot;) |&gt; 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie pour les Etats du Nord de l&#39;Inde&quot;) +
+  theme_minimal()
+
+data |&gt; 
+  filter(Regions==&quot;SR&quot;) |&gt; 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie pour les Etats du Sud de l&#39;inde&quot;) +
+  theme_minimal()
+
+data_complete_reg |&gt; 
+  filter(Regions==&quot;WR&quot;) |&gt; 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = &quot;Date&quot;, y = &quot;Consommation d&#39;énergie&quot;, title = &quot;Consommation d&#39;énergie pour les Etats de l&#39;Ouest de l&#39;Inde&quot;) +
+  theme_minimal()
+</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p>Au sein de chaque région de l’Inde, nous observons de forts
+contrastes de consommation d’énergie. Nous pouvons noter une différence
+d’échelle entre les graphiques. Par exemple, dans le Sud de l’Inde,
+Pondy a une faible consommation d’énergie (entre 4 et 10 mega Units) à
+l’opposé de Tamil Nadu où sa consommation varie entre 200 et 370 mega
+Units.</p>
+<p>Il serait intéressant de consulter l’avis d’un économiste ou
+politicien pour analyser et comprendre ces grandes disparités au sein
+des régions de l’Inde.</p>
+<p>Nous construisons le tableau des moyennes de consommation par région
+:</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaSA9IDJcbnkgPC0gYXMudmVjdG9yKHQodW5saXN0KGRhdGFfbG9uZ1ssIGldKSkpXG5cbnBsb3QoMTozNjEseSx0eXBlPVwibFwiLG1haW49XCJTaWduYWwgZGUgZMOpcGFydFwiLCB5bGFiID0gXCJDb25zb21tYXRpb25cIiwgeGxhYj1cIkpvdXJcIilcblxuIyBDcsOpZXIgdW4gc2lnbmFsIHN5bcOpdHJpc8OpXG55c3ltID0gYyh5LCByZXYodGFpbCh5LCBuPSA1MTItbGVuZ3RoKHkpKSkpICMgb24gY2hvaXNpdCA1MTIgcG91ciBhdm9pciB1bmUgcHVpc3NhbmNlIGRlIDJcblxuIyBUcmFjZXIgbGUgc2lnbmFsIHN5bcOpdHJpc8OpXG5wbG90KHlzeW0sIHR5cGUgPSBcImxcIiwgbWFpbiA9IFwiU2lnbmFsIHN5bcOpdHJpc8OpXCIsIHlsYWIgPSBcIkNvbnNvbW1hdGlvblwiLCB4bGFiID0gXCJKb3VyXCIpXG5cbiMgQWpvdXRlciB1bmUgbGlnbmUgdmVydGljYWxlIMOgIGxhIHBvc2l0aW9uIFxuIyBheGUgZGUgc3ltw6l0cmllIDogMzYxIGpvdXJzIFxuYWJsaW5lKHYgPSAzNjEsIGx0eSA9IDIpXG5gYGAifQ== -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudGFwcGx5KGRhdGEkQ29uc29tbWF0aW9uLCBkYXRhJFJlZ2lvbnMsIG1lYW4pXG5gYGAifQ== -->
+<pre class="r"><code>tapply(data$Consommation, data$Regions, mean)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Nous observons une hétérogénéité en termes de consommation entre les
+régions de l’Inde. En effet, le Nord-Est a une consommation très faible
+par rapport à l’Ouest.</p>
+</div>
+</div>
+<div id="ondelettes" class="section level1">
+<h1>Ondelettes</h1>
+<p>Puisque nos signaux sont irréguliers, notre choix de lissage s’est
+tourné vers les ondelettes car elles ont des bonnes propriétés de
+compressions et sont adaptées à ce type de données.</p>
+<p>Pour pouvoir poursuivre cette étude, nous avons du transformer notre
+dataframe de départ pour avoir chaque Etat en colonne avec la valeur de
+consommation en ligne pour chaque point de mesure.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YV9sb25nIDwtIGRhdGEuZnJhbWUoXCJFdGF0XCIgPSBkYXRhJEV0YXQsXCJEYXRlXCI9IGRhdGEkRGF0ZSxcIkNvbnNvbW1hdGlvblwiID0gZGF0YSRDb25zb21tYXRpb24pXG5cbmRhdGFfbG9uZyA8LSBkYXRhX2xvbmcgfD4gXG4gIHBpdm90X3dpZGVyKG5hbWVzX2Zyb20gPSBcIkV0YXRcIiwgdmFsdWVzX2Zyb20gPSBcIkNvbnNvbW1hdGlvblwiKVxuaGVhZChkYXRhX2xvbmcpXG5gYGAifQ== -->
+<pre class="r"><code>data_long &lt;- data.frame(&quot;Etat&quot; = data$Etat,&quot;Date&quot;= data$Date,&quot;Consommation&quot; = data$Consommation)
+
+data_long &lt;- data_long |&gt; 
+  pivot_wider(names_from = &quot;Etat&quot;, values_from = &quot;Consommation&quot;)
+head(data_long)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Le problème ici est que la longueur des courbes de consommation n’est
+pas de la forme <span class="math inline">\(2^J\)</span>. Ces courbes
+sont de longueur 356, on symétrise le signal à la fin pour atteindre une
+longueur de 512. On se ramènera à la fin au signal de départ de taille
+356.</p>
+<p>Nous représentons le signal pour un Etat (ici le Punjab) :</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaSA9IDJcbnkgPC0gYXMudmVjdG9yKHQodW5saXN0KGRhdGFfbG9uZ1ssIGldKSkpXG5cbnBsb3QoMTozNTYseSx0eXBlPVwibFwiLG1haW49XCJTaWduYWwgZGUgZMOpcGFydFwiLCB5bGFiID0gXCJDb25zb21tYXRpb25cIiwgeGxhYj1cIkpvdXJcIilcblxuIyBDcsOpZXIgdW4gc2lnbmFsIHN5bcOpdHJpc8OpXG55c3ltID0gYyh5LCByZXYodGFpbCh5LCBuPSA1MTItbGVuZ3RoKHkpKSkpICMgb24gY2hvaXNpdCA1MTIgcG91ciBhdm9pciB1bmUgcHVpc3NhbmNlIGRlIDJcblxuIyBUcmFjZXIgbGUgc2lnbmFsIHN5bcOpdHJpc8OpXG5wbG90KHlzeW0sIHR5cGUgPSBcImxcIiwgbWFpbiA9IFwiU2lnbmFsIHN5bcOpdHJpc8OpXCIsIHlsYWIgPSBcIkNvbnNvbW1hdGlvblwiLCB4bGFiID0gXCJKb3VyXCIpXG5cbiMgQWpvdXRlciB1bmUgbGlnbmUgdmVydGljYWxlIMOgIGxhIHBvc2l0aW9uIFxuIyBheGUgZGUgc3ltw6l0cmllIDogMzYxIGpvdXJzIFxuYWJsaW5lKHYgPSAzNTYsIGx0eSA9IDIpXG5gYGAifQ== -->
 <pre class="r"><code>i = 2
 y &lt;- as.vector(t(unlist(data_long[, i])))
 
-plot(1:361,y,type=&quot;l&quot;,main=&quot;Signal de départ&quot;, ylab = &quot;Consommation&quot;, xlab=&quot;Jour&quot;)
+plot(1:356,y,type=&quot;l&quot;,main=&quot;Signal de départ&quot;, ylab = &quot;Consommation&quot;, xlab=&quot;Jour&quot;)
 
 # Créer un signal symétrisé
 ysym = c(y, rev(tail(y, n= 512-length(y)))) # on choisit 512 pour avoir une puissance de 2
@@ -2079,7 +2115,194 @@ plot(ysym, type = &quot;l&quot;, main = &quot;Signal symétrisé&quot;, ylab = &
 
 # Ajouter une ligne verticale à la position 
 # axe de symétrie : 361 jours 
-abline(v = 361, lty = 2)</code></pre>
+abline(v = 356, lty = 2)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="continuer-a-commenter-plus-tard" class="section level1">
+<h1>CONTINUER A COMMENTER PLUS TARD</h1>
+</div>
+<div id="lissage-par-moindres-carrés-pénalisés" class="section level1">
+<h1>Lissage par moindres carrés pénalisés</h1>
+</div>
+<div id="justifier-pourquoi-ce-lissage" class="section level1">
+<h1>JUSTIFIER POURQUOI CE LISSAGE</h1>
+<div id="lissage-dune-trajectoire" class="section level2">
+<h2>Lissage d’une trajectoire</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxueSA8LSBhcy52ZWN0b3IodCh1bmxpc3QoZGF0YV9sb25nWywgaV0pKSkgIyBjb3VyYmUgZHUgcHJlbWllciBFdGF0IDogUHVuamFiXG50cHMgPC0gMTozNTZcbnBsb3QodHBzLHksdHlwZT1cImxcIiwgbWFpbiA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgZHUgUHVuamFiXCIpXG5gYGAifQ== -->
+<pre class="r"><code>y &lt;- as.vector(t(unlist(data_long[, i]))) # courbe du premier Etat : Punjab
+tps &lt;- 1:356
+plot(tps,y,type=&quot;l&quot;, main = &quot;Consommation d&#39;énergie du Punjab&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaSA9IDEwXG55IDwtIGFzLnZlY3Rvcih0KHVubGlzdChkYXRhX2xvbmdbLCBpXSkpKSAjIGNvdXJiZSBkdSBkaXhpw6htZSBFdGF0IDogQ2hoYXR0aXNnYXJoXG50cHMgPC0gMTozNTZcbnBsb3QodHBzLHksdHlwZT1cImxcIiwgbWFpbiA9IFwiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgZHUgQ2hoYXR0aXNnYXJoXCIpXG5gYGAifQ== -->
+<pre class="r"><code>i = 10
+y &lt;- as.vector(t(unlist(data_long[, i]))) # courbe du dixième Etat : Chhattisgarh
+tps &lt;- 1:356
+plot(tps,y,type=&quot;l&quot;, main = &quot;Consommation d&#39;énergie du Chhattisgarh&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<ol style="list-style-type: decimal">
+<li>Lissage par moindres carrés pénalisés sur la première courbe</li>
+</ol>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3BsYmFzaXMgPSBjcmVhdGUuYnNwbGluZS5iYXNpcyhyYW5nZXZhbCA9IGMoMSwzNTYpLFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBub3JkZXI9NCwgXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGJyZWFrcz1jKDE6MjUpKVxuIyBkw6lmaW5pdGlvbiB1bmUgYmFzZSBkZSBCLXNwbGluZSBlbnRyZSAxIGV0IDM1NiAobGVzIGRhdGVzKSBcbiMgb3JkcmUgNCAoY2xhc3NpcXVlKSBcbiMgYnJlYWtzIDogY291cHVyZVxuXG4jIE9uIGZhaXQgbCdhanVzdGVtZW50IHBvdXIgZGlmZsOpcmVudGVzIHZhbGV1cnMgZGUgbGFtYmRhIHBvdXIgbWluaW1pc2VyIGxlIGNyaXTDqHJlIGRlIHDDqW5hbGl0w6lcbiMgT24gdmV1dCBsYSBmb25jdGlvbiBsYSBwbHVzIHByb2NoZSBkZXMgcG9pbnRzIGV0IGxhIG1vaW5zIG9zY2lsbGFudGUgZ3LDomNlIMOgIGxhIHDDqW5hbGl0w6lcblxuZ2N2ID0gcmVwKDAsMzApICMgZ3JpbGxlIGRlIGxhbWJkYVxuXG5mb3IgKGkgaW4gMTozMCl7XG4gIFxuICBsYW1iZGEgPSBleHAoaS0xMClcbiAgXG4gIGZkcGFyID0gZmRQYXIoc3BsYmFzaXMsTGZkb2JqID0gMixsYW1iZGE9bGFtYmRhKSAjIGNhbGN1bCBkZSBsYSB2YWxldXIgZGUgcMOpbmFsaXTDqVxuICAjIExmZG9qID0gMiA6IG9yZHJlIGRlIGxhIGTDqXJpdsOpZSBkYW5zIGxhIHDDqW5hbGl0w6kgKGTDqXJpdsOpZSBzZWNvbmRlKVxuICBcbiAgc21vb3RoZGF0YSA9IHNtb290aC5iYXNpcyh0cHMseSwgZmRQYXJvYmogPSBmZHBhcikgIyBhanVzdGVtZW50IGRlIGwnb2JqZXQgZm9uY3Rpb25uZWxcbiAgXG4gICMgc21vb3RoLmJhc2lzIDogw6lxdWl2YWxlbnQgw6AgRGF0YTJmZCBtYWlzIEFWRUMgcMOpbmFsaXTDqVxuICAjIGRvbm5lIGxhIHZhbGV1ciBkdSBjcml0w6hyZSBWQyBkZSBNb2luZHJlcyBDYXJyw6lzIEfDqW7DqXJhbGlzw6lcbiAgXG4gIGdjdltpXSA9IHNtb290aGRhdGEkZ2N2ICMgZ2N2IDogZ2VuZXJhbCBjcm9zcyB2YWxpZGF0aW9uXG59XG5wbG90KGdjdilcbndoaWNoLm1pbihnY3YpXG5gYGAifQ== -->
+<pre class="r"><code>splbasis = create.bspline.basis(rangeval = c(1,356),
+                                norder=4, 
+                                breaks=c(1:25))
+# définition une base de B-spline entre 1 et 356 (les dates) 
+# ordre 4 (classique) 
+# breaks : coupure
+
+# On fait l&#39;ajustement pour différentes valeurs de lambda pour minimiser le critère de pénalité
+# On veut la fonction la plus proche des points et la moins oscillante grâce à la pénalité
+
+gcv = rep(0,30) # grille de lambda
+
+for (i in 1:30){
+  
+  lambda = exp(i-10)
+  
+  fdpar = fdPar(splbasis,Lfdobj = 2,lambda=lambda) # calcul de la valeur de pénalité
+  # Lfdoj = 2 : ordre de la dérivée dans la pénalité (dérivée seconde)
+  
+  smoothdata = smooth.basis(tps,y, fdParobj = fdpar) # ajustement de l&#39;objet fonctionnel
+  
+  # smooth.basis : équivalent à Data2fd mais AVEC pénalité
+  # donne la valeur du critère VC de Moindres Carrés Généralisé
+  
+  gcv[i] = smoothdata$gcv # gcv : general cross validation
+}
+plot(gcv)
+which.min(gcv)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Nous avons observé que la valeur optimale de lambda est la 13ème
+valeur, correspondant au minimum. Cette valeur nous permettra d’être
+proche des données observées.<br />
+Nous avons choisi de paramétrer le nombre de coupures entre 1 et 25 car
+les signaux sont très irréguliers et nous souhaitons être proche,
+raisonnablement, du signal d’origine. Ce choix est arbitraire car il
+peut engendrer du sur-apprentissage si le nombre de coupures est trop
+élevée par rapport au signal de départ.</p>
+<p>Nous allons recalculer la pénalité et refaire le lissage avec la
+valeur de lambda minimale :</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGFtYmRhID0gZXhwKHdoaWNoLm1pbihnY3YpLTEwKVxuZmRwYXIgPSBmZFBhcihzcGxiYXNpcyxMZmRvYmogPSAyLGxhbWJkYT1sYW1iZGEpICMgY2FsY3VsIHDDqW5hbGl0w6lcbnNtb290aGRhdGEgPSBzbW9vdGguYmFzaXModHBzLHksZmRQYXJvYmogPSBmZHBhcikgIyBsaXNzYWdlXG5gYGAifQ== -->
+<pre class="r"><code>lambda = exp(which.min(gcv)-10)
+fdpar = fdPar(splbasis,Lfdobj = 2,lambda=lambda) # calcul pénalité
+smoothdata = smooth.basis(tps,y,fdParobj = fdpar) # lissage</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Nous représentons sur un même graphe les observations et la fonction
+estimée reconstruite ˆf.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGxvdGZpdC5mZCh5LCMgdmFsZXVyIGRlIGNvbnNvbW1hdGlvbiBwb3VyIHVuIHBheXNcbiAgICAgICAgICAgdHBzLCAjIGxlcyBkYXRlc1xuICAgICAgICAgICBzbW9vdGhkYXRhJGZkLCAjIG5vcyBkb25uw6llcyBlc3RpbcOpZXNcbiAgICAgICAgICAgIyAxIMOgIDM1NiBcbiAgICAgICAgICAgcGNoPTIwLFxuICAgICAgICAgICBjZXg9MC41LFxuICAgICAgICAgICBtYWluPVwibGVzIG9ic2VydmF0aW9ucyBldCBsYSBmb25jdGlvbiBlc3RpbcOpZSByZWNvbnN0cnVpdGUgy4ZmXCIsXG4gICAgICAgICAgIHhsYWIgPSBcImNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llXCIsXG4gICAgICAgICAgIHlsYWI9XCJ0ZW1wc1wiKVxuYGBgIn0= -->
+<pre class="r"><code>plotfit.fd(y,# valeur de consommation pour un pays
+           tps, # les dates
+           smoothdata$fd, # nos données estimées
+           # 1 à 356 
+           pch=20,
+           cex=0.5,
+           main=&quot;les observations et la fonction estimée reconstruite ˆf&quot;,
+           xlab = &quot;consommation d&#39;énergie&quot;,
+           ylab=&quot;temps&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>On a représenté les points et l’objet fonctionnel.</p>
+</div>
+</div>
+<div id="idee" class="section level1">
+<h1>IDEE :</h1>
+<p>la prof a dit que ça dépendait de nos objectifs. Comme on a pas une
+base d’ondelettes, est-ce qu’on va réellement pouvoir reproduire le
+signal ? Donc notre objectif ça pourrait être d’avoir un signal “+
+lisse” ? à voir</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZmhhdHByaW0gPSBldmFsLmZkKHRwcyxzbW9vdGhkYXRhJGZkLExmZG9iaj0xKSAjIGTDqXJpdsOpIHByZW1pw6hyZVxuIyBldmFsLmZkIDogw6l2YWx1ZSBzdXIgbGVzIGRhdGVzXG5maGF0cHByaW0gPSBldmFsLmZkKHRwcyxzbW9vdGhkYXRhJGZkLExmZG9iaj0yKSAjIGTDqXJpdsOpIHNlY29uZGVcbm1hdHBsb3QodHBzLGNiaW5kKGZoYXRwcmltLGZoYXRwcHJpbSksdHlwZT1cImxcIilcbmBgYCJ9 -->
+<pre class="r"><code>fhatprim = eval.fd(tps,smoothdata$fd,Lfdobj=1) # dérivé première
+# eval.fd : évalue sur les dates
+fhatpprim = eval.fd(tps,smoothdata$fd,Lfdobj=2) # dérivé seconde
+matplot(tps,cbind(fhatprim,fhatpprim),type=&quot;l&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>La dérivée première est en noir et la dérivée seconde en rouge.</p>
+<div id="lissage-de-lensemble-des-trajectoires" class="section level3">
+<h3>Lissage de l’ensemble des trajectoires</h3>
+<p>Nous allons lisser une par une les signaux de chaque Etats.</p>
+</div>
+</div>
+<div id="probleme-ici-a-revoir" class="section level1">
+<h1>PROBLEME ICI A REVOIR</h1>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3BsYmFzaXMgPSBjcmVhdGUuYnNwbGluZS5iYXNpcyhyYW5nZXZhbCA9IGMoMSwzNTYpLFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBub3JkZXI9NCwgXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGJyZWFrcz1jKDE6MjUpKVxuXG5nY3YgPSBtYXRyaXgoMCwgbnJvdyA9IDMwLCBuY29sID0gMzQpICMgMzAgdmFsZXVyIHBvdXIgY2hhY3VuIGRlcyAzMyBldGF0c1xuZm9yKGUgaW4gMjozNCl7ICMgUG91ciBjaGFjdW4gZGVzIEV0YXRzXG4gIGZvciAoaSBpbiAxOjMwKXtcbiAgICB5IDwtIGFzLnZlY3Rvcih0KHVubGlzdChkYXRhX2xvbmdbLCBlXSkpKVxuICAgIGxhbWJkYSA9IGV4cChpLTEwKVxuICAgIGZkcGFyVGVtcCA9IGZkUGFyKHNwbGJhc2lzLExmZG9iaiA9IDIsbGFtYmRhPWxhbWJkYSlcbiAgICBzbW9vdGhkYXRhID0gc21vb3RoLmJhc2lzKHRwcyx5LGZkUGFyb2JqID0gZmRwYXJUZW1wKSAjIFBsdXMgdW4gc2V1bCBpbmRpdmlkdSBtYWlzIHBsdXNpZXVycyBpbmRpdmlkdVxuICAgIGdjdltpLGVdID0gbWVhbihzbW9vdGhkYXRhJGdjdikgXG4gICMgYXZhbnQgdW4gY3JpdMOocmUgZGUgVkMgcG91ciBjaGFxdWUgaW5kaXZpZHVcbiAgIyBtYWludGVuYW50IGNvbW1lIG4gY291cmJlcyBkb25jIG4gdmFsZXVyIGRlIGNyaXTDqHJlIHBvdXIgdW4gbGFtYmRhIGRvbm7DqVxuICAjIGRvbmMgbW95ZW5uZSBkZXMgY3JpdMOocmVzIGRlIFZDXG4gIH1cbn1cbnBsb3QoZ2N2KVxud2hpY2gubWluKGdjdilcbmBgYCJ9 -->
+<pre class="r"><code>splbasis = create.bspline.basis(rangeval = c(1,356),
+                                norder=4, 
+                                breaks=c(1:25))
+
+gcv = matrix(0, nrow = 30, ncol = 34) # 30 valeur pour chacun des 33 etats
+for(e in 2:34){ # Pour chacun des Etats
+  for (i in 1:30){
+    y &lt;- as.vector(t(unlist(data_long[, e])))
+    lambda = exp(i-10)
+    fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+    smoothdata = smooth.basis(tps,y,fdParobj = fdparTemp) # Plus un seul individu mais plusieurs individu
+    gcv[i,e] = mean(smoothdata$gcv) 
+  # avant un critère de VC pour chaque individu
+  # maintenant comme n courbes donc n valeur de critère pour un lambda donné
+  # donc moyenne des critères de VC
+  }
+}
+plot(gcv)
+which.min(gcv)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGFtYmRhID0gZXhwKHdoaWNoLm1pbihnY3YpLTEwKVxuZmRwYXJUZW1wID0gZmRQYXIoc3BsYmFzaXMsTGZkb2JqID0gMixsYW1iZGE9bGFtYmRhKVxuc21vb3RoZGF0YSA9IHNtb290aC5iYXNpcyhhZ2UsZ3Jvd3RoJGhndG0sZmRQYXJvYmogPSBmZHBhclRlbXApXG5gYGAifQ== -->
+<pre class="r"><code>lambda = exp(which.min(gcv)-10)
+fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+smoothdata = smooth.basis(age,growth$hgtm,fdParobj = fdparTemp)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>plotfit.fd –&gt; un graphique par individu (moins bien)</p>
+<p><u>Représentation des données brutes et des données lisses</u></p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZmhhdHNtb290aCA9IGV2YWwuZmQoYWdlLHNtb290aGRhdGEkZmQpICMgb24gw6l2YWx1ZSBub3RyZSBvYmpldCBmb25jdGlvbm5lbCBzdXIgbm9zIMOiZ2VcblxucGFyKG1mcm93PWMoMSwyKSlcbm1hdHBsb3QodHBzLGdyb3d0aCRoZ3RtLHR5cGU9XCJwXCIsbHR5PTEseWxhYj1cIlwiLG1haW49XCJkb25uZWVzIGJydXRlc1wiKVxubWF0cGxvdCh0cHMsZmhhdHNtb290aCx0eXBlPVwicFwiLGx0eT0xLHlsYWI9XCJcIixtYWluPVwiZG9ubmVlcyBsaXNzZWVzXCIpXG5gYGAifQ== -->
+<pre class="r"><code>fhatsmooth = eval.fd(age,smoothdata$fd) # on évalue notre objet fonctionnel sur nos âge
+
+par(mfrow=c(1,2))
+matplot(tps,growth$hgtm,type=&quot;p&quot;,lty=1,ylab=&quot;&quot;,main=&quot;donnees brutes&quot;)
+matplot(tps,fhatsmooth,type=&quot;p&quot;,lty=1,ylab=&quot;&quot;,main=&quot;donnees lissees&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Très proche</p>
+<p>la différence que l’on voit pas est ?</p>
+<p><u>Représentation des résidus</u></p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubWF0cGxvdChhZ2UsZmhhdHNtb290aC1ncm93dGgkaGd0bSxsdHk9MSx0eXBlPVwibFwiLHlsYWI9XCJyZXNpZHVzXCIpXG5gYGAifQ== -->
+<pre class="r"><code>matplot(age,fhatsmooth-growth$hgtm,lty=1,type=&quot;l&quot;,ylab=&quot;residus&quot;)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
@@ -2087,7 +2310,6 @@ abline(v = 361, lty = 2)</code></pre>
 <div id="a-faire" class="section level1">
 <h1>A FAIRE</h1>
 <p>base de spline pénalisé</p>
-<p>base de fourier avec bcp de noeuds</p>
 </div>
 <div id="sources" class="section level1">
 <h1>Sources</h1>
@@ -2098,7 +2320,7 @@ abline(v = 361, lty = 2)</code></pre>
 <!-- rnb-text-end -->
 </div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkFuYWx5c2UgZGVzIGRvbm7DqWVzIGRlIGNvbnNvbW1hdGlvbnMgZCfDqW5lcmdpZSBlbiBJbmRlIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQotLS0NCg0KIyBFbnZpcm9ubmVtZW50IGRlIHRyYXZhaWwNCg0KYGBge3IsIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0V9DQpsaWJyYXJ5KHRpZHl2ZXJzZSkNCmxpYnJhcnkoZ2dwbG90MikNCmxpYnJhcnkocmVhZHhsKQ0KYGBgDQoNCiMgTm90cmUgYmFzZSBkZSBkb25uw6llcw0KDQpOb3RyZSDDqXR1ZGUgcG9ydGUgc3VyIGwnYW5hbHlzZSBkZSBsYSBjb25zb21tYXRpb24gZCfDqW5lcmdpZSBkYW5zIGxlcyAzMyBFdGF0cyBkJ0luZGUuIElsIGVzdCDDoCBub3RlciBxdWUgbOKAmUluZGUgZXN0IGxlIHRyb2lzacOobWUgcHJvZHVjdGV1ciBldCBsZSB0cm9pc2nDqG1lIGNvbnNvbW1hdGV1ciBk4oCZw6lsZWN0cmljaXTDqSBhdSBtb25kZS4NCg0KDQojIyBJbXBvcnQgZGVzIGRvbm7DqWVzDQoNCkRhbnMgdW4gcHJlbWllciB0ZW1wcywgbm91cyBhbGxvbnMgaW1wb3J0ZXIgbGVzIGRvbm7DqWVzLg0KDQpgYGB7cn0NCmRhdGEgPC0gcmVhZC5jc3YoImxvbmdfZGF0YS5jc3YiLCBzdHJpbmdzQXNGYWN0b3JzID0gVCkNCg0KY29sbmFtZXMoZGF0YSkgPC0gYygiRXRhdCIsICJSZWdpb25zIiwgImxhdGl0dWRlIiwgImxvbmdpdHVkZSIsICJEYXRlIiwgIkNvbnNvbW1hdGlvbiIpDQpkYXRhIDwtIGRhdGFbLC1jKDMsNCldDQpzdW1tYXJ5KGRhdGEpDQojIFZpZXcoZGF0YSkNCmBgYA0KDQpHcsOiY2Ugw6AgY2UgcsOpc3Vtw6kgc3RhdGlzdGlxdWUsIG5vdXMgcG91dm9ucyB2b2lyIHF1ZSBsZXMgdmFsZXVycyBkZSBub3MgZG9ubsOpZXMgc29udCBhc3NleiDDqXRlbmR1ZXMuXA0KDQpgYGB7cn0NCmRhdGEkRXRhdFt3aGljaC5tYXgoZGF0YSRDb25zb21tYXRpb24pXQ0KZGF0YSRFdGF0W3doaWNoLm1pbihkYXRhJENvbnNvbW1hdGlvbildDQpgYGANCg0KRW4gZWZmZXQsIGNlcnRhaW5lcyB2YWxldXJzIGpvdXJuYWxpw6hyZXMgc29udCB0csOocyBmYWlibGVzIChpbmbDqXJpZXVyZXMgw6AgMSkgYWxvcnMgcXVlIGQnYXV0cmVzIHNvbnQgNTAwIGZvaXMgcGx1cyDDqWxldsOpZXMuIFBhciBleGVtcGxlLCBsZSBNYWhhcmFzaHRyYSBxdWkgcHLDqXNlbnRlIGNlcnRhaW5lcyB2YWxldXJzIHRyw6hzIGltcG9ydGFudGVzIGVuIG9wcG9zaXRpb24gYXZlYyBsZSBTaWtraW0uIA0KDQpDb25jZXJuYW50IG5vdHJlIGJhc2UgZGUgZG9ubsOpZXMsIGVsbGUgZMOpY3JpdCBsYSBjb25zb21tYXRpb24gZCfDqW5lcmdpZSBkYW5zICoqMzMgRXRhdHMqKiBkJ0luZGUgZW50cmUgMjAxOSBldCAyMDIwLiBcDQpOb3VzIGF2b25zIDE2IDU5OSBsaWduZXMsIHNvaXQgKio1MDMgcG9pbnRzIGRlIG1lc3VyZSoqIHBhciBwYXlzICg1MDMqMzMpLiBMZXMgZG9ubsOpZXMgc29udCBqb3VybmFsacOocmVzLCBleHByaW3DqWVzIGVuIE1lZ2EgVW5pdHMuDQoNCmBgYHtyfQ0KZGltKGRhdGEpDQpgYGANCg0KDQojIyBDaG9peCBkZSBsYSBww6lyaW9kZSDDqXR1ZGnDqWUNCg0KTm91cyBhbGxvbnMgdHJhbnNmb3JtZXIgbm90cmUgdmFyaWFibGUgRGF0ZSBhdSBmb3JtYXQgZGF0ZSBwb3VyIHBvdXJzdWl2cmUgbCfDqXR1ZGUgY29ycmVjdGVtZW50Lg0KDQpgYGB7cn0NCmRhdGEkRGF0ZSA8LSBhcy5EYXRlKGRhdGEkRGF0ZSwgZm9ybWF0ID0gIiVkLyVtLyVZICVIOiVNOiVTIikNCnN0cihkYXRhKSAjIFbDqXJpZmljYXRpb24NCmBgYA0KDQpQb3VyIHNpbXBsaWZpZXIgbm90cmUgYW5hbHlzZSwgbm91cyBhbGxvbnMgbm91cyBjb25jZW50cmVyIHNldWxlbWVudCBzdXIgdW5lIHNldWxlIGFubsOpZSA6IA0KDQpgYGB7cn0NCmRhdGEgPC0gZGF0YSB8PiANCiAgZmlsdGVyKERhdGUgPD0gYXMuRGF0ZSgiMjAyMC0wMS0wMiIpKQ0KYGBgDQoNCk9uIHbDqXJpZmllIMOgIHByw6lzZW50IHF1ZSBsZXMgZG9ubsOpZXMgcXVlIGwnb24gdmEgYW5hbHlzZXIgY29ycmVzcG9uZGVudCBiaWVuIMOgIGxhIHDDqXJpb2RlIGNob2lzaWUuIA0KDQpgYGB7cn0NCm1pbihkYXRhJERhdGUpDQptYXgoZGF0YSREYXRlKQ0KYGBgDQoNCiMjIE5vcm1hbGlzYXRpb24gZGVzIGRvbm7DqWVzIA0KDQpBdSBkw6lwYXJ0LCBub3VzIGF2b25zIHZvdWx1IG5vcm1hbGlzZXIgbGVzIGRvbm7DqWVzIHBhciBsZSBub21icmUgZCdoYWJpdGFudHMgZGUgY2hhcXVlIEV0YXQgcG91ciBxdWUgbGVzIGNvbnNvbW1hdGlvbnMgYWllbnQgbGUgbcOqbWUgaW1wYWN0IGRhbnMgbm90cmUgw6l0dWRlLiBDZXBlbmRhbnQsIGNldHRlIG3DqXRob2RlIHMnZXN0IHLDqXbDqWzDqWUgcHJvYmzDqW1hdGlxdWUgY2FyIG5vdXMgYXZvbnMgb2J0ZW51IGRlcyB2YWxldXJzIHRyw6hzIHByb2NoZXMgZGUgesOpcm8sIGNlIHF1aSBhdXJhaXQgY29tcGxpcXXDqSBsZXMgY2FsY3Vscy4NCg0KTm91cyBhdm9ucyBkb25jIGNob2lzaSBkZSByw6lkdWlyZSBsZXMgZG9ubsOpZXMgZGUgY29uc29tbWF0aW9uLCBlbiBzb3VzdHJheWFudCBsYSBtb3llbm5lLCBwb3VyIGNvbnRpbnVlciBub3RyZSBhbmFseXNlIGF2ZWMgZG9ubsOpZXMgbW9pbnMgZGlzcHJvcG9ydGlvbm7DqWVzLg0KDQpgYGB7cn0NCm1veWVubmVfcGFyX2V0YXQgPC0gdGFwcGx5KGRhdGEkQ29uc29tbWF0aW9uLCBkYXRhJEV0YXQsIG1lYW4pDQoNCm5vcm1hbGl6ZWRfZW5lcmd5IDwtIGRhdGENCmZvcihpIGluIDE6bnJvdyhub3JtYWxpemVkX2VuZXJneSkpew0KICBub3JtYWxpemVkX2VuZXJneSRDb25zb21tYXRpb25baV0gPC0gbm9ybWFsaXplZF9lbmVyZ3kkQ29uc29tbWF0aW9uW2ldIC0gbW95ZW5uZV9wYXJfZXRhdFtub3JtYWxpemVkX2VuZXJneSRFdGF0W2ldXQ0KfQ0KYGBgDQoNCg0KU3VpdGUgw6AgY2V0dGUgbm9ybWFpbGlzYXRpb24sIG5vdXMgcG91dm9ucyBvYnNlcnZlciB1bmUgZGltaW51dGlvbiBpbXBvcnRhbnRlIGRlcyB2YWxldXJzLiBNYWlzIG5vdXMgb2J0ZW5vbnMgZGVzIHZhbGV1cnMgZGUgY29uc29tbWF0aW9ucyBuw6lnYXRpdmVzLCBjZSBxdWkgcG9zZSBwcm9ibMOobWUgcG91ciBsJ2ludGVycHLDqXRhdGlvbiBkZSBub3MgYW5hbHlzZXMuIA0KTm91cyBhbGxvbnMgZG9uYyB0cmF2YWlsbGVyIGF2ZWMgbGVzIHZhbGV1cnMgaW5pdGlhbGVzLiANCg0KIyMgUmVwcsOpc2VudGF0aW9ucyBncmFwaGlxdWVzIA0KDQpOb3VzIGFsbG9ucyB0b3V0IGQnYWJvcmQgcmVwcsOpc2VudGVyIHNpbXBsZW1lbnQgbm9zIGRvbm7DqWVzIHBvdXIgcG91dm9pciBmYWlyZSByZXNzb3J0aXIgbGVzIGluZm9ybWF0aW9ucyBpbXBvcnRhbnRlcy4gDQoNCmBgYHtyfQ0KIyBVdGlsaXNhdGlvbiBkZSBsYSBmb25jdGlvbiBnYXRoZXIgcG91ciBtZXR0cmUgZW4gZm9ybWUgbGVzIGRvbm7DqWVzDQojIGRhdGFfbG9uZyA8LSB0aWR5cjo6Z2F0aGVyKG5vcm1hbGl6ZWRfZW5lcmd5LCBrZXkgPSAiRXRhdCIsIHZhbHVlID0gIkNvbnNvbW1hdGlvbiIsIC1EYXRlKQ0KDQojIENyw6lhdGlvbiBkdSBncmFwaGlxdWUgYXZlYyBnZ3Bsb3QNCmdncGxvdChkYXRhLCBhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sIGNvbG9yID0gRXRhdCkpICsNCiAgZ2VvbV9saW5lKCkgKw0KICBsYWJzKHggPSAiRGF0ZSIsIHkgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUiLCB0aXRsZSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBwYXIgw6l0YXQiKSArDQogIHRoZW1lX21pbmltYWwoKQ0KYGBgDQpDZSBncmFwaGlxdWUgbm91cyBtb250cmUgcXVlIG5vcyBkb25uw6llcyBzb250IHRyw6hzIGlycsOpZ3VsacOocmVzLiBcDQoNCltSZXByw6lzZW50YXRpb24gZGVzIGRvbm7DqWVzIGVuIGRldXggcGFydGllc10ue3VuZGVybGluZX0NCg0KUG91ciBwb3V2b2lyIHF1ZSBsZXMgaW5mb3JtYXRpb25zIHNvaWVudCBwbHVzIGxpc2libGVzLCBub3VzIGF2b25zIGTDqWNpZMOpIGRlIHPDqXBhcmVyIGVuIHBsdXNpZXVycyBwYXJ0aWVzIG5vcyBkb25uw6llcy4gXA0KTm91cyBhdm9ucyBmaXjDqSBkZXMgc2V1aWxzIHBhciByYXBwb3J0IMOgIGxhIG1veWVubmUgZGUgY29uc29tbWF0aW9ucyBkZXMgRXRhdHMgcG91ciByw6lhbGlzZXIgY2VzIGdyYXBoaXF1ZXMuIA0KDQoNCk9uIGNhbGN1bGUgZCdhYm9yZCBsYSBtb3llbm5lIHBhciBFdGF0IGV0IG9uIGFqb3V0ZSBjZXR0ZSBtb3llbm5lIGEgdW4gbm91dmVhdSBkYXRhZnJhbWUgOiANCg0KYGBge3J9DQptb3llbm5lX3Bhcl9ldGF0IDwtIHRhcHBseShkYXRhJENvbnNvbW1hdGlvbiwgZGF0YSRFdGF0LCBtZWFuKQ0KbW95ZW5uZV9wYXJfZXRhdCA8LSBkYXRhLmZyYW1lKEV0YXQgPSBuYW1lcyhtb3llbm5lX3Bhcl9ldGF0KSwgTW95ZW5uZSA9IG1veWVubmVfcGFyX2V0YXQpDQoNCmRhdGFfY29tcGxldGUgPC0gbWVyZ2UoZGF0YSxtb3llbm5lX3Bhcl9ldGF0LCBieSA9ICJFdGF0IikgDQpgYGANCg0KT24gc8OpcGFyZSBsZXMgZG9ubsOpZXMgZW4gMyBjYXTDqWdvcmllcyA6IA0KDQpgYGB7cn0NCmRhdGFfaW5mIDwtIGRhdGFfY29tcGxldGUgfD4gDQogIGZpbHRlcihNb3llbm5lIDw9IDUwKQ0KIyBkYXRhX2luZg0KDQpkYXRhX21veSA8LSBkYXRhX2NvbXBsZXRlIHw+IA0KICBmaWx0ZXIoTW95ZW5uZSA+IDUwICYgTW95ZW5uZSA8IDIwMCkNCiMgZGF0YV9tb3kNCg0KZGF0YV9zdXAgPC0gZGF0YV9jb21wbGV0ZSB8PiANCiAgZmlsdGVyKE1veWVubmUgPj0gMjAwKQ0KIyBkYXRhX3N1cA0KYGBgDQoNCmBgYHtyfQ0KZ2dwbG90KGRhdGFfaW5mLCBhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sIGNvbG9yID0gRXRhdCkpICsNCiAgZ2VvbV9saW5lKCkgKw0KICBsYWJzKHggPSAiRGF0ZSIsIHkgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUiLCB0aXRsZSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBwYXIgw6l0YXQiLCBzdWJ0aXRsZSA9ICJQYXlzIGNvbnNvbW1hbnQgbW9pbnMgZGUgNTAgTWVnYSBVbml0cyBlbiBtb3llbm5lIikgKw0KICB0aGVtZV9taW5pbWFsKCkNCg0KZ2dwbG90KGRhdGFfbW95LCBhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sIGNvbG9yID0gRXRhdCkpICsNCiAgZ2VvbV9saW5lKCkgKw0KICBsYWJzKHggPSAiRGF0ZSIsIHkgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUiLCB0aXRsZSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBwYXIgw6l0YXQiLCBzdWJ0aXRsZSA9ICJQYXlzIGNvbnNvbW1hbnQgZW50cmUgNTAgZXQgMjAwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZSIpICsNCiAgdGhlbWVfbWluaW1hbCgpDQoNCmdncGxvdChkYXRhX3N1cCwgYWVzKHggPSBEYXRlLCB5ID0gQ29uc29tbWF0aW9uLCBjb2xvciA9IEV0YXQpKSArDQogIGdlb21fbGluZSgpICsNCiAgbGFicyh4ID0gIkRhdGUiLCB5ID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIiwgdGl0bGUgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIMOpdGF0Iiwgc3VidGl0bGUgPSAiUGF5cyBjb25zb21tYW50IHBsdXMgZGUgMjAwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZSIpICsNCiAgdGhlbWVfbWluaW1hbCgpDQpgYGANCg0KDQpbUmVwcsOpc2VudGF0aW9uIHNlbG9uIGxhIHLDqWdpb25dey51bmRlcmxpbmV9DQoNCkwnaW5kZSBlc3QgZGl2aXPDqSBlbiA1IHJlZ2lvbnMgOiBsZSBOb3JkIChOUiksIE5vcmQtRXN0IChORVIpLCBsZSBTdWQgKFNSKSwgbCdFc3QgKEVSKSBldCBsJ091ZXN0IChXUikNCk5vdXMgdHJhw6dvbnMgbGVzIGNvbnNvbW1hdGlvbnMgZW4gZm9uY3Rpb24gZGVzIHLDqWdpb25zICh1bmUgY291bGV1ciBwYXIgcsOpZ2lvbikNCg0KTm91cyBjYWxjdWxvbnMgbGVzIG1veWVubmVzIGRlcyBjb25zb21tYXRpb25zIHBhciBSZWdpb25zOg0KDQoNCmBgYHtyfQ0KbW95ZW5uZV9wYXJfcmVnIDwtIHRhcHBseShkYXRhJENvbnNvbW1hdGlvbiwgZGF0YSRSZWdpb25zLCBtZWFuKQ0KbW95ZW5uZV9wYXJfcmVnIDwtIGRhdGEuZnJhbWUoUmVnaW9ucyA9IG5hbWVzKG1veWVubmVfcGFyX3JlZyksIE1veWVubmVfcmVnID0gbW95ZW5uZV9wYXJfcmVnKQ0KIyANCmRhdGFfY29tcGxldGVfcmVnIDwtIG1lcmdlKGRhdGFfY29tcGxldGUsbW95ZW5uZV9wYXJfcmVnLCBieSA9ICJSZWdpb25zIikNCmBgYA0KDQoNCmBgYHtyfQ0KZGF0YV9pbmYgPC0gZGF0YV9jb21wbGV0ZV9yZWcgfD4gDQogIGZpbHRlcihNb3llbm5lX3JlZyA8PSA2NikNCiMgZGF0YV9pbmYNCg0KZGF0YV9tb3kgPC0gZGF0YV9jb21wbGV0ZV9yZWcgfD4gDQogIGZpbHRlcihNb3llbm5lX3JlZyA+IDY2ICYgTW95ZW5uZV9yZWcgPCAxNTApDQojIGRhdGFfbW95DQoNCmRhdGFfc3VwIDwtIGRhdGFfY29tcGxldGVfcmVnIHw+IA0KICBmaWx0ZXIoTW95ZW5uZV9yZWcgPj0gMTUwKQ0KIyBkYXRhX3N1cA0KYGBgDQoNCg0KYGBge3J9DQpnZ3Bsb3QoZGF0YSwgYWVzKHggPSBEYXRlLCB5ID0gQ29uc29tbWF0aW9uLCBjb2xvciA9IFJlZ2lvbnMpKSArDQogIGdlb21fbGluZSgpICsNCiAgbGFicyh4ID0gIkRhdGUiLCB5ID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIiwgdGl0bGUgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIMOpdGF0IikgKw0KICB0aGVtZV9taW5pbWFsKCkNCmBgYA0KDQoNCg0KYGBge3J9DQpnZ3Bsb3QoZGF0YV9pbmYsIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBSZWdpb25zKSkgKw0KICBnZW9tX2xpbmUoKSArDQogIGxhYnMoeCA9ICJEYXRlIiwgeSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSIsIHRpdGxlID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIHBhciDDqXRhdCIsIHN1YnRpdGxlID0gIlBheXMgY29uc29tbWFudCBtb2lucyBkZSA1MCBNZWdhIFVuaXRzIGVuIG1veWVubmUiKSArDQogIHRoZW1lX21pbmltYWwoKQ0KDQpnZ3Bsb3QoZGF0YV9tb3ksIGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbiwgY29sb3IgPSBSZWdpb25zKSkgKw0KICBnZW9tX2xpbmUoKSArDQogIGxhYnMoeCA9ICJEYXRlIiwgeSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSIsIHRpdGxlID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIHBhciDDqXRhdCIsIHN1YnRpdGxlID0gIlBheXMgY29uc29tbWFudCBlbnRyZSA1MCBldCAyMDAgTWVnYSBVbml0cyBlbiBtb3llbm5lIikgKw0KICB0aGVtZV9taW5pbWFsKCkNCg0KZ2dwbG90KGRhdGFfc3VwLCBhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sIGNvbG9yID0gUmVnaW9ucykpICsNCiAgZ2VvbV9saW5lKCkgKw0KICBsYWJzKHggPSAiRGF0ZSIsIHkgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUiLCB0aXRsZSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBwYXIgw6l0YXQiLCBzdWJ0aXRsZSA9ICJQYXlzIGNvbnNvbW1hbnQgcGx1cyBkZSAyMDAgTWVnYSBVbml0cyBlbiBtb3llbm5lIikgKw0KICB0aGVtZV9taW5pbWFsKCkNCmBgYA0KDQpMZXMgcmVwcsOpc2VudGF0aW9ucyBncmFwaGlxdWVzIG5lIG5vdXMgcGVybWV0dGVudCBwYXMgZGUgYmllbiB2aXN1YWxpc2VyLg0KDQpgYGB7cn0NCnRhcHBseShkYXRhJENvbnNvbW1hdGlvbiwgZGF0YSRSZWdpb25zLCBtZWFuKQ0KYGBgDQpOb3VzIG9ic2Vydm9ucyB1bmUgZ3JhbmRlIGRpc3Bhcml0w6kgZW50cmUgbGVzIHLDqWdpb25zIGRlIGwnSW5kZS4gRW4gZWZmZXQsIGxlIE5vcmQtRXN0IMOgIHVuZSBjb25zb21tYXRpb24gdHLDqHMgZmFpYmxlIHBhciByYXBwb3J0IMOgIGwnT3Vlc3QuDQoNCg0KYGBge3J9DQp0YXBwbHkoZGF0YSRDb25zb21tYXRpb24sIGRhdGEkRXRhdCwgbWVhbikNCmBgYA0KDQoNCg0KDQojIExpc3NhZ2UNClB1aXNxdWUgbm9zIHNpZ25hdXggc29udCBpcnLDqWd1bGllcnMsIG5vdXMgYXZvbnMgY2hvaXNpIGQndXRpbGlzZXIgbGVzIG9uZGVsZXR0ZXMgY2FyIGVsbGVzIG9udCBkZXMgYm9ubmVzIHByb3ByacOpdMOpcyBkZSBjb21wcmVzc2lvbnMgZXQgc29udCBhZGFwdMOpZXMgw6AgY2UgdHlwZSBkZSBkb25uw6llcy4gDQoNCg0KUG91ciBsYSBjb3VyYmUgZGUgdGVtcMOpcmF0dXJlIGRlIGxvbmd1ZXVyIDM2NSwgb24gc3ltw6l0cmlzZSBsZSBzaWduYWwgw6AgbGEgZmluIHBvdXIgYXR0ZWluZHJlIHVuZSBsb25ndWV1ciBkZSA1MTIuIE9uIHNlIHJhbcOobmVyYSDDoCBsYSBmaW4gYXUgc2lnbmFsIGRlIGTDqXBhcnQgZGUgdGFpbGxlIDM2NS4NCg0KDQojIExpc3NhZ2UNCg0KDQpQdWlzcXVlIG5vcyBzaWduYXV4IHNvbnQgaXJyw6lndWxpZXJzLCBub3VzIGF2b25zIGNob2lzaSBkJ3V0aWxpc2VyIGxlcyBvbmRlbGV0dGVzIGNhciBlbGxlcyBvbnQgZGVzIGJvbm5lcyBwcm9wcmnDqXTDqXMgZGUgY29tcHJlc3Npb25zIGV0IHNvbnQgYWRhcHTDqWVzIMOgIGNlIHR5cGUgZGUgZG9ubsOpZXMuIA0KDQoNCkxlIHByb2Jsw6htZSBpY2kgZXN0IHF1ZSBsYSBsb25ndWV1ciBkZXMgY291cmJlcyBkZSBjb25zb21tYXRpb24gbidlc3QgcGFzIGRlIGxhIGZvcm1lICQyXkokLiBQb3VyIGxhIGNvdXJiZSBkZSB0ZW1ww6lyYXR1cmUgZGUgbG9uZ3VldXIgMzY1LCBvbiBzeW3DqXRyaXNlIGxlIHNpZ25hbCDDoCBsYSBmaW4gcG91ciBhdHRlaW5kcmUgdW5lIGxvbmd1ZXVyIGRlIDUxMi4gDQpPbiBzZSByYW3DqG5lcmEgw6AgbGEgZmluIGF1IHNpZ25hbCBkZSBkw6lwYXJ0IGRlIHRhaWxsZSAzNjUuDQoNCmBgYHtyfQ0KZGF0YV9sb25nIDwtIGRhdGEgfD4gDQogIHNlbGVjdCgtMikNCg0KZGF0YV9sb25nIDwtIGRhdGFfbG9uZyB8PiANCiAgcGl2b3Rfd2lkZXIobmFtZXNfZnJvbSA9ICJFdGF0IiwgdmFsdWVzX2Zyb20gPSAiQ29uc29tbWF0aW9uIikNCmBgYA0KDQoNCmBgYHtyfQ0KaSA9IDINCnkgPC0gYXMudmVjdG9yKHQodW5saXN0KGRhdGFfbG9uZ1ssIGldKSkpDQoNCnBsb3QoMTozNjEseSx0eXBlPSJsIixtYWluPSJTaWduYWwgZGUgZMOpcGFydCIsIHlsYWIgPSAiQ29uc29tbWF0aW9uIiwgeGxhYj0iSm91ciIpDQoNCiMgQ3LDqWVyIHVuIHNpZ25hbCBzeW3DqXRyaXPDqQ0KeXN5bSA9IGMoeSwgcmV2KHRhaWwoeSwgbj0gNTEyLWxlbmd0aCh5KSkpKSAjIG9uIGNob2lzaXQgNTEyIHBvdXIgYXZvaXIgdW5lIHB1aXNzYW5jZSBkZSAyDQoNCiMgVHJhY2VyIGxlIHNpZ25hbCBzeW3DqXRyaXPDqQ0KcGxvdCh5c3ltLCB0eXBlID0gImwiLCBtYWluID0gIlNpZ25hbCBzeW3DqXRyaXPDqSIsIHlsYWIgPSAiQ29uc29tbWF0aW9uIiwgeGxhYiA9ICJKb3VyIikNCg0KIyBBam91dGVyIHVuZSBsaWduZSB2ZXJ0aWNhbGUgw6AgbGEgcG9zaXRpb24gDQojIGF4ZSBkZSBzeW3DqXRyaWUgOiAzNjEgam91cnMgDQphYmxpbmUodiA9IDM2MSwgbHR5ID0gMikNCmBgYA0KDQoNCg0KIyBBIEZBSVJFDQoNCmJhc2UgZGUgc3BsaW5lIHDDqW5hbGlzw6kNCg0KYmFzZSBkZSBmb3VyaWVyIGF2ZWMgYmNwIGRlIG5vZXVkcw0KDQoNCiMgU291cmNlcyANCg0KLSBiYXNlIGRlIGRvbm7DqWVzIDogaHR0cHM6Ly93d3cua2FnZ2xlLmNvbS9kYXRhc2V0cy90d2lua2xlMDcwNS9zdGF0ZS13aXNlLXBvd2VyLWNvbnN1bXB0aW9uLWluLWluZGlhP2ZiY2xpZD1Jd0FSM3ROVnJYcFRyUmxPX0hWT29hNTNiY2FUUjhhUjdRVV9ObGJlNEFoaG1memRLOUVSYTVYeGlkMXlrDQotIG5vbWJyZSBkJ2hhYml0YW50cyBwYXIgcGF5cyA6IGh0dHBzOi8vZnIuemh1aml3b3JsZC5jb20vaW4vNjczNjMwLXRyaXB1cmEvP2ZiY2xpZD1Jd0FSMlVhX2x4Mms3dS1OaWwwNjVQdzBTMG1LNjgyWDdlOEF1dlI1Q1M3bGZwc2JVQlBJbEV6Tml3RTJR</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkFuYWx5c2UgZGVzIGRvbm7DqWVzIGRlIGNvbnNvbW1hdGlvbnMgZCfDqW5lcmdpZSBlbiBJbmRlIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQotLS0NCg0KIyBFbnZpcm9ubmVtZW50IGRlIHRyYXZhaWwNCg0KYGBge3IsIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0V9DQpsaWJyYXJ5KHRpZHl2ZXJzZSkNCmxpYnJhcnkoZ2dwbG90MikNCmxpYnJhcnkocmVhZHhsKQ0KbGlicmFyeSh0aWR5cikNCmxpYnJhcnkoZmRhKQ0KYGBgDQoNCiMgTm90cmUgYmFzZSBkZSBkb25uw6llcw0KDQpOb3RyZSDDqXR1ZGUgcG9ydGUgc3VyIGwnYW5hbHlzZSBkZSBsYSBjb25zb21tYXRpb24gZCfDqW5lcmdpZSBkYW5zIGxlcyAzMyBFdGF0cyBkJ0luZGUuIElsIGVzdCDDoCBub3RlciBxdWUgbOKAmUluZGUgZXN0IGxlIHRyb2lzacOobWUgcHJvZHVjdGV1ciBldCBsZSB0cm9pc2nDqG1lIGNvbnNvbW1hdGV1ciBk4oCZw6lsZWN0cmljaXTDqSBhdSBtb25kZS4NCg0KDQojIyBJbXBvcnRhdGlvbiBkZXMgZG9ubsOpZXMNCg0KRGFucyB1biBwcmVtaWVyIHRlbXBzLCBub3VzIGFsbG9ucyBpbXBvcnRlciBsZXMgZG9ubsOpZXMuDQoNCmBgYHtyfQ0KZGF0YSA8LSByZWFkLmNzdigibG9uZ19kYXRhXzIuY3N2Iiwgc3RyaW5nc0FzRmFjdG9ycyA9IFQsc2VwID0gIjsiKQ0KDQpjb2xuYW1lcyhkYXRhKSA8LSBjKCJFdGF0IiwgIlJlZ2lvbnMiLCAibGF0aXR1ZGUiLCAibG9uZ2l0dWRlIiwgIkRhdGUiLCAiQ29uc29tbWF0aW9uIikNCmRhdGEgPC0gZGF0YVssLWMoMyw0KV0NCnN1bW1hcnkoZGF0YSkNCiMgVmlldyhkYXRhKQ0KYGBgDQoNCkdyw6JjZSDDoCBjZSByw6lzdW3DqSBzdGF0aXN0aXF1ZSwgbm91cyBwb3V2b25zIHZvaXIgcXVlIGxlcyB2YWxldXJzIGRlIG5vcyBkb25uw6llcyBkZSBjb25zb21tYXRpb24gZCfDqW5lcmdpZSBzb250IGFzc2V6IMOpdGVuZHVlcyA6IGVsbGVzIHNvbnQgY29tcHJpc2VzIGVudHJlIDAuMyBldCA1MjIuMSBNw6lnYSBVbml0cy5cDQoNCmBgYHtyfQ0KZGF0YSRFdGF0W3doaWNoLm1heChkYXRhJENvbnNvbW1hdGlvbildDQpkYXRhJEV0YXRbd2hpY2gubWluKGRhdGEkQ29uc29tbWF0aW9uKV0NCmBgYA0KDQpFbiBlZmZldCwgY2VydGFpbmVzIHZhbGV1cnMgam91cm5hbGnDqHJlcyBzb250IHRyw6hzIGZhaWJsZXMgKGluZsOpcmlldXJlcyDDoCAxKSBhbG9ycyBxdWUgZCdhdXRyZXMgc29udCA1MDAgZm9pcyBwbHVzIMOpbGV2w6llcy4gUGFyIGV4ZW1wbGUsIGxlIE1haGFyYXNodHJhIHF1aSBwcsOpc2VudGUgY2VydGFpbmVzIHZhbGV1cnMgdHLDqHMgaW1wb3J0YW50ZXMgZW4gb3Bwb3NpdGlvbiBhdmVjIGxlIFNpa2tpbS4gDQoNCkNvbmNlcm5hbnQgbm90cmUgYmFzZSBkZSBkb25uw6llcywgZWxsZSBkw6ljcml0IGxhIGNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIGRhbnMgKiozMyBFdGF0cyoqIGQnSW5kZSBlbnRyZSAyMDE5IGV0IDIwMjAuIFwNCk5vdXMgYXZvbnMgMTYgNDM0IGxpZ25lcywgc29pdCAqKjQ5OCBwb2ludHMgZGUgbWVzdXJlKiogcGFyIHBheXMgKDQ5OCozMykuIExlcyBkb25uw6llcyBzb250IGpvdXJuYWxpw6hyZXMsIGV4cHJpbcOpZXMgZW4gTWVnYSBVbml0cy4NCg0KYGBge3J9DQpkaW0oZGF0YSkNCmBgYA0KDQoNCiMjIENob2l4IGRlIGxhIHDDqXJpb2RlIMOpdHVkacOpZQ0KDQpOb3VzIGFsbG9ucyB0cmFuc2Zvcm1lciBub3RyZSB2YXJpYWJsZSBEYXRlIGF1IGZvcm1hdCBkYXRlIHBvdXIgcG91cnN1aXZyZSBsJ8OpdHVkZSBjb3JyZWN0ZW1lbnQuDQoNCmBgYHtyfQ0KZGF0YSREYXRlIDwtIGFzLkRhdGUoZGF0YSREYXRlLCBmb3JtYXQgPSAiJWQvJW0vJVkgJUg6JU0iKQ0Kc3RyKGRhdGEpICMgVsOpcmlmaWNhdGlvbg0KYGBgDQoNClBvdXIgc2ltcGxpZmllciBub3RyZSBhbmFseXNlLCBub3VzIGFsbG9ucyBub3VzIGNvbmNlbnRyZXIgc2V1bGVtZW50IHN1ciBsJ2FubsOpZSAyMDE5IDogDQoNCmBgYHtyfQ0KZGF0YSA8LSBkYXRhIHw+IA0KICBmaWx0ZXIoRGF0ZSA8PSBhcy5EYXRlKCIyMDIwLTAxLTAyIikpDQpgYGANCg0KT24gdsOpcmlmaWUgw6AgcHLDqXNlbnQgcXVlIGxlcyBkb25uw6llcyBxdWUgbCdvbiB2YSBhbmFseXNlciBjb3JyZXNwb25kZW50IGJpZW4gw6AgbGEgcMOpcmlvZGUgY2hvaXNpZS4gDQoNCmBgYHtyfQ0KbWluKGRhdGEkRGF0ZSkNCm1heChkYXRhJERhdGUpDQpgYGANCg0KIyMgTm9ybWFsaXNhdGlvbiBkZXMgZG9ubsOpZXMgDQoNCkF1IGTDqXBhcnQsIG5vdXMgYXZvbnMgdm91bHUgbm9ybWFsaXNlciBsZXMgZG9ubsOpZXMgcGFyIGxlIG5vbWJyZSBkJ2hhYml0YW50cyBkZSBjaGFxdWUgRXRhdCBwb3VyIHF1ZSBsZXMgY29uc29tbWF0aW9ucyBhaWVudCBsZSBtw6ptZSBpbXBhY3QgZGFucyBub3RyZSDDqXR1ZGUuIENlcGVuZGFudCwgY2V0dGUgbcOpdGhvZGUgcydlc3QgcsOpdsOpbMOpZSBwcm9ibMOpbWF0aXF1ZSBjYXIgbm91cyBhdm9ucyBvYnRlbnUgZGVzIHZhbGV1cnMgdHLDqHMgcHJvY2hlcyBkZSB6w6lybywgY2UgcXVpIGF1cmFpdCBjb21wbGlxdcOpIGxlcyBjYWxjdWxzLg0KDQpOb3VzIGF2b25zIGRvbmMgY2hvaXNpIGRlIHLDqWR1aXJlIGxlcyBkb25uw6llcyBkZSBjb25zb21tYXRpb24sIGVuIHNvdXN0cmF5YW50IGxhIG1veWVubmUsIHBvdXIgY29udGludWVyIG5vdHJlIGFuYWx5c2UgYXZlYyBkb25uw6llcyBtb2lucyBkaXNwcm9wb3J0aW9ubsOpZXMuDQoNCmBgYHtyfQ0KbW95ZW5uZV9wYXJfZXRhdCA8LSB0YXBwbHkoZGF0YSRDb25zb21tYXRpb24sIGRhdGEkRXRhdCwgbWVhbikNCg0Kbm9ybWFsaXplZF9lbmVyZ3kgPC0gZGF0YQ0KZm9yKGkgaW4gMTpucm93KG5vcm1hbGl6ZWRfZW5lcmd5KSl7DQogIG5vcm1hbGl6ZWRfZW5lcmd5JENvbnNvbW1hdGlvbltpXSA8LSBub3JtYWxpemVkX2VuZXJneSRDb25zb21tYXRpb25baV0gLSBtb3llbm5lX3Bhcl9ldGF0W25vcm1hbGl6ZWRfZW5lcmd5JEV0YXRbaV1dDQp9DQpgYGANCg0KDQpTdWl0ZSDDoCBjZXR0ZSBub3JtYWlsaXNhdGlvbiwgbm91cyBwb3V2b25zIG9ic2VydmVyIHVuZSBkaW1pbnV0aW9uIGltcG9ydGFudGUgZGVzIHZhbGV1cnMuIE1haXMgbm91cyBvYnRlbm9ucyBkZXMgdmFsZXVycyBkZSBjb25zb21tYXRpb25zIG7DqWdhdGl2ZXMsIGNlIHF1aSBwb3NlIHByb2Jsw6htZSBwb3VyIGwnaW50ZXJwcsOpdGF0aW9uIGRlIG5vcyBhbmFseXNlcy4gDQpOb3VzIGFsbG9ucyBkb25jIHRyYXZhaWxsZXIgYXZlYyBsZXMgdmFsZXVycyBpbml0aWFsZXMuIA0KDQojIyBSZXByw6lzZW50YXRpb25zIGdyYXBoaXF1ZXMgDQoNCk5vdXMgYWxsb25zIHRvdXQgZCdhYm9yZCByZXByw6lzZW50ZXIgc2ltcGxlbWVudCBub3MgZG9ubsOpZXMgcG91ciBwb3V2b2lyIGZhaXJlIHJlc3NvcnRpciBsZXMgaW5mb3JtYXRpb25zIGltcG9ydGFudGVzLiANCg0KYGBge3J9DQpnZ3Bsb3QoZGF0YSwgYWVzKHggPSBEYXRlLCB5ID0gQ29uc29tbWF0aW9uLCBjb2xvciA9IEV0YXQpKSArDQogIGdlb21fbGluZSgpICsNCiAgbGFicyh4ID0gIkRhdGUiLCB5ID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIiwgdGl0bGUgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIEV0YXQiKSArDQogIHRoZW1lX21pbmltYWwoKQ0KYGBgDQpDZSBncmFwaGlxdWUgbm91cyBtb250cmUgcXVlIG5vcyBkb25uw6llcyBzb250IHRyw6hzIGlycsOpZ3VsacOocmVzLiBcDQoNCltSZXByw6lzZW50YXRpb24gZGVzIGRvbm7DqWVzIGVuIGRpZmbDqXJlbnRlcyBwYXJ0aWVzXS57dW5kZXJsaW5lfQ0KDQpQb3VyIHF1ZSBsZXMgaW5mb3JtYXRpb25zIHNvaWVudCBwbHVzIGxpc2libGVzLCBub3VzIGF2b25zIGTDqWNpZMOpIGRlIHPDqXBhcmVyIGVuIHBsdXNpZXVycyBwYXJ0aWVzIG5vcyBkb25uw6llcy4NCk5vdXMgYXZvbnMgZml4w6kgZGVzIHNldWlscyBwYXIgcmFwcG9ydCDDoCBsYSBtb3llbm5lIGRlIGNvbnNvbW1hdGlvbnMgZGVzIEV0YXRzIHBvdXIgcsOpYWxpc2VyIGNlcyBncmFwaGlxdWVzLiANCg0KW0NhbGN1bCBkZSBsYSBtb3llbm5lIHBhciBFdGF0XS57dW5kZXJsaW5lfQ0KDQpPbiBjYWxjdWxlIGQnYWJvcmQgbGEgbW95ZW5uZSBwYXIgRXRhdCBldCBvbiBham91dGUgY2V0dGUgbW95ZW5uZSBhIHVuIG5vdXZlYXUgZGF0YWZyYW1lIDogDQoNCmBgYHtyfQ0KbW95ZW5uZV9wYXJfZXRhdCA8LSB0YXBwbHkoZGF0YSRDb25zb21tYXRpb24sIGRhdGEkRXRhdCwgbWVhbikNCm1veWVubmVfcGFyX2V0YXQgPC0gZGF0YS5mcmFtZShFdGF0ID0gbmFtZXMobW95ZW5uZV9wYXJfZXRhdCksIE1veWVubmUgPSBtb3llbm5lX3Bhcl9ldGF0KQ0KDQpkYXRhX2NvbXBsZXRlIDwtIG1lcmdlKGRhdGEsbW95ZW5uZV9wYXJfZXRhdCwgYnkgPSAiRXRhdCIpIA0KaGVhZChkYXRhX2NvbXBsZXRlKQ0KYGBgDQoNCg0KW1PDqXBhcmF0aW9uIGRlIG5vdHJlIGpldSBkZSBkb25uw6llc10ue3VuZGVybGluZX0NCg0KT24gc8OpcGFyZSBsZXMgZG9ubsOpZXMgZW4gMyBjYXTDqWdvcmllcyA6IA0KDQpgYGB7cn0NCmRhdGFfaW5mIDwtIGRhdGFfY29tcGxldGUgfD4gDQogIGZpbHRlcihNb3llbm5lIDw9IDUwKQ0KIyBkYXRhX2luZg0KDQpkYXRhX21veSA8LSBkYXRhX2NvbXBsZXRlIHw+IA0KICBmaWx0ZXIoTW95ZW5uZSA+IDUwICYgTW95ZW5uZSA8IDIwMCkNCiMgZGF0YV9tb3kNCg0KZGF0YV9zdXAgPC0gZGF0YV9jb21wbGV0ZSB8PiANCiAgZmlsdGVyKE1veWVubmUgPj0gMjAwKQ0KIyBkYXRhX3N1cA0KYGBgDQoNCltSZXByw6lzZW50YXRpb25zIGdyYXBoaXF1ZXNdLnt1bmRlcmxpbmV9DQoNCmBgYHtyfQ0KZ2dwbG90KGRhdGFfaW5mLCBhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sIGNvbG9yID0gRXRhdCkpICsNCiAgZ2VvbV9saW5lKCkgKw0KICBsYWJzKHggPSAiRGF0ZSIsIHkgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUiLCB0aXRsZSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBwYXIgRXRhdCIsIHN1YnRpdGxlID0gIkV0YXRzIGNvbnNvbW1hbnQgbW9pbnMgZGUgNTAgTWVnYSBVbml0cyBlbiBtb3llbm5lIikgKw0KICB0aGVtZV9taW5pbWFsKCkNCg0KZ2dwbG90KGRhdGFfbW95LCBhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sIGNvbG9yID0gRXRhdCkpICsNCiAgZ2VvbV9saW5lKCkgKw0KICBsYWJzKHggPSAiRGF0ZSIsIHkgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUiLCB0aXRsZSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBwYXIgRXRhdCIsIHN1YnRpdGxlID0gIkV0YXRzIGNvbnNvbW1hbnQgZW50cmUgNTAgZXQgMjAwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZSIpICsNCiAgdGhlbWVfbWluaW1hbCgpDQoNCmdncGxvdChkYXRhX3N1cCwgYWVzKHggPSBEYXRlLCB5ID0gQ29uc29tbWF0aW9uLCBjb2xvciA9IEV0YXQpKSArDQogIGdlb21fbGluZSgpICsNCiAgbGFicyh4ID0gIkRhdGUiLCB5ID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIiwgdGl0bGUgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIEV0YXQiLCBzdWJ0aXRsZSA9ICJFdGF0cyBjb25zb21tYW50IHBsdXMgZGUgMjAwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZSIpICsNCiAgdGhlbWVfbWluaW1hbCgpDQpgYGANCg0KR3LDomNlIMOgIGNlcyByZXByw6lzZW50YXRpb25zLCBpbCBlc3QgcGx1cyBmYWNpbGUgZCdvYnNlcnZlciBldCBkJ8OpdHVkaWVyIGwnYWxsdXJlIGRlIG5vcyBkb25uw6llcy5cDQoNClBvdXIgbGEgcGx1cGFydCBkZXMgRXRhdHMsIGxldXIgY29uc29tbWF0aW9uIHZhcmllIGJlYXVjb3VwIHRvdXQgYXUgbG9uZyBkZSBsJ2FubsOpZSBldCBlbiBxdWVscXVlcyBqb3VycyBsZXVyIGNvbnNvbW1hdGlvbiBwZXV0IGRvdWJsZXIgb3UgYmllbiBkaW1pbnVlciBzdWJpdGVtZW50Lg0KDQpDZXBlbmRhbnQgY2VydGFpbnMgRXRhdHMgY29tbWUgbGUgVHJpcHVyYSBwb3Nzw6hkZSB1bmUgY29uc29tbWF0aW9uIHRyw6hzIGZhaWJsZSwgZXQgcGV1IGRlIHZhcmlhdGlvbnMgZGFucyBzb24gc2lnbmFsIHNvbnQgb2JzZXJ2w6llcyA6DQoNCmBgYHtyfQ0KZGF0YSB8PiANCiAgZmlsdGVyKEV0YXQ9PSJUcmlwdXJhIikgfD4gDQogIGdncGxvdChhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24pKSArDQogIGdlb21fbGluZSgpICsNCiAgbGFicyh4ID0gIkRhdGUiLCB5ID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIiwgdGl0bGUgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcGFyIEV0YXQiLCBzdWJ0aXRsZSA9ICJFdGF0cyBjb25zb21tYW50IG1vaW5zIGRlIDUwIE1lZ2EgVW5pdHMgZW4gbW95ZW5uZSIpICsNCiAgdGhlbWVfbWluaW1hbCgpDQpgYGANCg0KU2EgY29uc29tbWF0aW9uIHZhcmllIGVudHJlIDIuNCBldCA2LjYgbWVnYSBVbml0cy4NCg0KYGBge3J9DQptaW4oZGF0YSRDb25zb21tYXRpb25bZGF0YSRFdGF0PT0iVHJpcHVyYSJdKQ0KbWF4KGRhdGEkQ29uc29tbWF0aW9uW2RhdGEkRXRhdD09IlRyaXB1cmEiXSkNCmBgYA0KDQpBIGwnb3Bwb3NpdGlvbiBkdSBQdW5qYWIgcXVpIGx1aSBwb3Nzw6hkZSB1bmUgdHLDqHMgZ3JhbmRlIHZhcmlhdGlvbiBkYW5zIHNhIGNvbnNvbW1hdGlvbiA6DQoNCmBgYHtyfQ0KbWluKGRhdGEkQ29uc29tbWF0aW9uW2RhdGEkRXRhdD09IlB1bmphYiJdKQ0KbWF4KGRhdGEkQ29uc29tbWF0aW9uW2RhdGEkRXRhdD09IlB1bmphYiJdKQ0KYGBgDQoNCltUYWJsZWF1IGRlcyBtb3llbm5lcyBkZSBjb25zb21tYXRpb24gcGFyIEV0YXRdey51bmRlcmxpbmV9DQoNCmBgYHtyfQ0KdGFwcGx5KGRhdGEkQ29uc29tbWF0aW9uLCBkYXRhJEV0YXQsIG1lYW4pDQpgYGANCg0KDQoNCltSZXByw6lzZW50YXRpb24gc2Vsb24gbGEgcsOpZ2lvbl17LnVuZGVybGluZX0NCg0KTCdJbmRlIGVzdCBkaXZpc8OpZSBlbiA1IHJlZ2lvbnMgOiBsZSBOb3JkIChOUiksIE5vcmQtRXN0IChORVIpLCBsZSBTdWQgKFNSKSwgbCdFc3QgKEVSKSBldCBsJ091ZXN0IChXUikNCk5vdXMgYWxsb25zIHRyYWNlciBsZXMgY29uc29tbWF0aW9ucyBlbiBmb25jdGlvbiBkZXMgcsOpZ2lvbnMgKHVuZSBjb3VsZXVyIHBhciByw6lnaW9uKS4vDQpEZSBsYSBtw6ptZSBtYW5pw6hyZSBxdWUgbGVzIHJlcHLDqXNlbnRhdGlvbnMgcHLDqWPDqWRlbnRlcywgbm91cyBuZSBwb3V2b25zIHJlcHLDqXNlbnRlciBsZXMgcsOpZ2lvbnMgc3VyIGxlIG3Dqm1lIGdyYXBoaXF1ZS4gU2FucyBkaXZpc2VyIGxhIHJlcHLDqXNlbnRhdGlvbiwgaWwgZXN0IGRpZmZpY2lsZSBkZSBiaWVuIG9ic2VydmVyIGxlcyBkaWZmw6lyZW5jZXMgZW50cmUgbGVzIHLDqWdpb25zLg0KDQpOb3VzIGTDqWNpZG9ucyBkb25jIGRlIHJlcHLDqXNlbnRlciB1bmUgcsOpZ2lvbiBwYXIgZ3JhcGhpcXVlIDoNCg0KYGBge3J9DQpkYXRhIHw+IA0KICBmaWx0ZXIoUmVnaW9ucz09IkVSIikgfD4gDQogIGdncGxvdChhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sY29sb3IgPSBFdGF0KSkgKw0KICBnZW9tX2xpbmUoKSArDQogIGxhYnMoeCA9ICJEYXRlIiwgeSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSIsIHRpdGxlID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIHBvdXIgbGVzIEV0YXRzIGRlIGwnRXN0IGRlIGwnSW5kZSIpICsNCiAgdGhlbWVfbWluaW1hbCgpDQoNCmRhdGEgfD4gDQogIGZpbHRlcihSZWdpb25zPT0iTkVSIikgfD4gDQogIGdncGxvdChhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sY29sb3IgPSBFdGF0KSkgKw0KICBnZW9tX2xpbmUoKSArDQogIGxhYnMoeCA9ICJEYXRlIiwgeSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSIsIHRpdGxlID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIHBvdXIgbGVzIEV0YXRzIGR1IE5vcmQgRXN0IGRlIGwnSW5kZSIpICsNCiAgdGhlbWVfbWluaW1hbCgpDQoNCmRhdGEgfD4gDQogIGZpbHRlcihSZWdpb25zPT0iTlIiKSB8PiANCiAgZ2dwbG90KGFlcyh4ID0gRGF0ZSwgeSA9IENvbnNvbW1hdGlvbixjb2xvciA9IEV0YXQpKSArDQogIGdlb21fbGluZSgpICsNCiAgbGFicyh4ID0gIkRhdGUiLCB5ID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIiwgdGl0bGUgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUgcG91ciBsZXMgRXRhdHMgZHUgTm9yZCBkZSBsJ0luZGUiKSArDQogIHRoZW1lX21pbmltYWwoKQ0KDQpkYXRhIHw+IA0KICBmaWx0ZXIoUmVnaW9ucz09IlNSIikgfD4gDQogIGdncGxvdChhZXMoeCA9IERhdGUsIHkgPSBDb25zb21tYXRpb24sY29sb3IgPSBFdGF0KSkgKw0KICBnZW9tX2xpbmUoKSArDQogIGxhYnMoeCA9ICJEYXRlIiwgeSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSIsIHRpdGxlID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIHBvdXIgbGVzIEV0YXRzIGR1IFN1ZCBkZSBsJ2luZGUiKSArDQogIHRoZW1lX21pbmltYWwoKQ0KDQpkYXRhX2NvbXBsZXRlX3JlZyB8PiANCiAgZmlsdGVyKFJlZ2lvbnM9PSJXUiIpIHw+IA0KICBnZ3Bsb3QoYWVzKHggPSBEYXRlLCB5ID0gQ29uc29tbWF0aW9uLGNvbG9yID0gRXRhdCkpICsNCiAgZ2VvbV9saW5lKCkgKw0KICBsYWJzKHggPSAiRGF0ZSIsIHkgPSAiQ29uc29tbWF0aW9uIGQnw6luZXJnaWUiLCB0aXRsZSA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBwb3VyIGxlcyBFdGF0cyBkZSBsJ091ZXN0IGRlIGwnSW5kZSIpICsNCiAgdGhlbWVfbWluaW1hbCgpDQoNCmBgYA0KDQpBdSBzZWluIGRlIGNoYXF1ZSByw6lnaW9uIGRlIGwnSW5kZSwgbm91cyBvYnNlcnZvbnMgZGUgZm9ydHMgY29udHJhc3RlcyBkZSBjb25zb21tYXRpb24gZCfDqW5lcmdpZS4gTm91cyBwb3V2b25zIG5vdGVyIHVuZSBkaWZmw6lyZW5jZSBkJ8OpY2hlbGxlIGVudHJlIGxlcyBncmFwaGlxdWVzLiBQYXIgZXhlbXBsZSwgZGFucyBsZSBTdWQgZGUgbCdJbmRlLCBQb25keSBhIHVuZSBmYWlibGUgY29uc29tbWF0aW9uIGQnw6luZXJnaWUgKGVudHJlIDQgZXQgMTAgbWVnYSBVbml0cykgw6AgbCdvcHBvc8OpIGRlIFRhbWlsIE5hZHUgb8O5IHNhIGNvbnNvbW1hdGlvbiB2YXJpZSBlbnRyZSAyMDAgZXQgMzcwIG1lZ2EgVW5pdHMuDQoNCklsIHNlcmFpdCBpbnTDqXJlc3NhbnQgZGUgY29uc3VsdGVyIGwnYXZpcyBkJ3VuIMOpY29ub21pc3RlIG91IHBvbGl0aWNpZW4gcG91ciBhbmFseXNlciBldCBjb21wcmVuZHJlIGNlcyBncmFuZGVzIGRpc3Bhcml0w6lzIGF1IHNlaW4gZGVzIHLDqWdpb25zIGRlIGwnSW5kZS4NCg0KDQpOb3VzIGNvbnN0cnVpc29ucyBsZSB0YWJsZWF1IGRlcyBtb3llbm5lcyBkZSBjb25zb21tYXRpb24gcGFyIHLDqWdpb24gOg0KDQpgYGB7cn0NCnRhcHBseShkYXRhJENvbnNvbW1hdGlvbiwgZGF0YSRSZWdpb25zLCBtZWFuKQ0KYGBgDQoNCk5vdXMgb2JzZXJ2b25zIHVuZSBow6l0w6lyb2fDqW7DqWl0w6kgZW4gdGVybWVzIGRlIGNvbnNvbW1hdGlvbiBlbnRyZSBsZXMgcsOpZ2lvbnMgZGUgbCdJbmRlLiBFbiBlZmZldCwgbGUgTm9yZC1Fc3QgYSB1bmUgY29uc29tbWF0aW9uIHRyw6hzIGZhaWJsZSBwYXIgcmFwcG9ydCDDoCBsJ091ZXN0Lg0KDQoNCiMgT25kZWxldHRlcw0KDQoNClB1aXNxdWUgbm9zIHNpZ25hdXggc29udCBpcnLDqWd1bGllcnMsIG5vdHJlIGNob2l4IGRlIGxpc3NhZ2Ugcydlc3QgdG91cm7DqSB2ZXJzIGxlcyBvbmRlbGV0dGVzIGNhciBlbGxlcyBvbnQgZGVzIGJvbm5lcyBwcm9wcmnDqXTDqXMgZGUgY29tcHJlc3Npb25zIGV0IHNvbnQgYWRhcHTDqWVzIMOgIGNlIHR5cGUgZGUgZG9ubsOpZXMuIA0KDQpQb3VyIHBvdXZvaXIgcG91cnN1aXZyZSBjZXR0ZSDDqXR1ZGUsIG5vdXMgYXZvbnMgZHUgdHJhbnNmb3JtZXIgbm90cmUgZGF0YWZyYW1lIGRlIGTDqXBhcnQgcG91ciBhdm9pciBjaGFxdWUgRXRhdCBlbiBjb2xvbm5lIGF2ZWMgbGEgdmFsZXVyIGRlIGNvbnNvbW1hdGlvbiBlbiBsaWduZSBwb3VyIGNoYXF1ZSBwb2ludCBkZSBtZXN1cmUuIA0KDQpgYGB7ciwgbWVzc2FnZT1GQUxTRSwgd2FybmluZz1GQUxTRX0NCmRhdGFfbG9uZyA8LSBkYXRhLmZyYW1lKCJFdGF0IiA9IGRhdGEkRXRhdCwiRGF0ZSI9IGRhdGEkRGF0ZSwiQ29uc29tbWF0aW9uIiA9IGRhdGEkQ29uc29tbWF0aW9uKQ0KDQpkYXRhX2xvbmcgPC0gZGF0YV9sb25nIHw+IA0KICBwaXZvdF93aWRlcihuYW1lc19mcm9tID0gIkV0YXQiLCB2YWx1ZXNfZnJvbSA9ICJDb25zb21tYXRpb24iKQ0KaGVhZChkYXRhX2xvbmcpDQpgYGANCg0KTGUgcHJvYmzDqG1lIGljaSBlc3QgcXVlIGxhIGxvbmd1ZXVyIGRlcyBjb3VyYmVzIGRlIGNvbnNvbW1hdGlvbiBuJ2VzdCBwYXMgZGUgbGEgZm9ybWUgJDJeSiQuIENlcyBjb3VyYmVzIHNvbnQgZGUgbG9uZ3VldXIgMzU2LCBvbiBzeW3DqXRyaXNlIGxlIHNpZ25hbCDDoCBsYSBmaW4gcG91ciBhdHRlaW5kcmUgdW5lIGxvbmd1ZXVyIGRlIDUxMi4gDQpPbiBzZSByYW3DqG5lcmEgw6AgbGEgZmluIGF1IHNpZ25hbCBkZSBkw6lwYXJ0IGRlIHRhaWxsZSAzNTYuDQoNCk5vdXMgcmVwcsOpc2VudG9ucyBsZSBzaWduYWwgcG91ciB1biBFdGF0IChpY2kgbGUgUHVuamFiKSA6DQoNCmBgYHtyfQ0KaSA9IDINCnkgPC0gYXMudmVjdG9yKHQodW5saXN0KGRhdGFfbG9uZ1ssIGldKSkpDQoNCnBsb3QoMTozNTYseSx0eXBlPSJsIixtYWluPSJTaWduYWwgZGUgZMOpcGFydCIsIHlsYWIgPSAiQ29uc29tbWF0aW9uIiwgeGxhYj0iSm91ciIpDQoNCiMgQ3LDqWVyIHVuIHNpZ25hbCBzeW3DqXRyaXPDqQ0KeXN5bSA9IGMoeSwgcmV2KHRhaWwoeSwgbj0gNTEyLWxlbmd0aCh5KSkpKSAjIG9uIGNob2lzaXQgNTEyIHBvdXIgYXZvaXIgdW5lIHB1aXNzYW5jZSBkZSAyDQoNCiMgVHJhY2VyIGxlIHNpZ25hbCBzeW3DqXRyaXPDqQ0KcGxvdCh5c3ltLCB0eXBlID0gImwiLCBtYWluID0gIlNpZ25hbCBzeW3DqXRyaXPDqSIsIHlsYWIgPSAiQ29uc29tbWF0aW9uIiwgeGxhYiA9ICJKb3VyIikNCg0KIyBBam91dGVyIHVuZSBsaWduZSB2ZXJ0aWNhbGUgw6AgbGEgcG9zaXRpb24gDQojIGF4ZSBkZSBzeW3DqXRyaWUgOiAzNjEgam91cnMgDQphYmxpbmUodiA9IDM1NiwgbHR5ID0gMikNCmBgYA0KDQojIENPTlRJTlVFUiBBIENPTU1FTlRFUiBQTFVTIFRBUkQNCg0KIyBMaXNzYWdlIHBhciBtb2luZHJlcyBjYXJyw6lzIHDDqW5hbGlzw6lzDQoNCiMgSlVTVElGSUVSIFBPVVJRVU9JIENFIExJU1NBR0UNCg0KIyMgTGlzc2FnZSBkJ3VuZSB0cmFqZWN0b2lyZQ0KDQpgYGB7cn0NCnkgPC0gYXMudmVjdG9yKHQodW5saXN0KGRhdGFfbG9uZ1ssIGldKSkpICMgY291cmJlIGR1IHByZW1pZXIgRXRhdCA6IFB1bmphYg0KdHBzIDwtIDE6MzU2DQpwbG90KHRwcyx5LHR5cGU9ImwiLCBtYWluID0gIkNvbnNvbW1hdGlvbiBkJ8OpbmVyZ2llIGR1IFB1bmphYiIpDQpgYGANCg0KYGBge3J9DQppID0gMTANCnkgPC0gYXMudmVjdG9yKHQodW5saXN0KGRhdGFfbG9uZ1ssIGldKSkpICMgY291cmJlIGR1IGRpeGnDqG1lIEV0YXQgOiBDaGhhdHRpc2dhcmgNCnRwcyA8LSAxOjM1Ng0KcGxvdCh0cHMseSx0eXBlPSJsIiwgbWFpbiA9ICJDb25zb21tYXRpb24gZCfDqW5lcmdpZSBkdSBDaGhhdHRpc2dhcmgiKQ0KYGBgDQoNCjEuIExpc3NhZ2UgcGFyIG1vaW5kcmVzIGNhcnLDqXMgcMOpbmFsaXPDqXMgc3VyIGxhIHByZW1pw6hyZSBjb3VyYmUNCg0KDQpgYGB7cixtZXNzYWdlPUZBTFNFLHdhcm5pbmc9RkFMU0V9DQpzcGxiYXNpcyA9IGNyZWF0ZS5ic3BsaW5lLmJhc2lzKHJhbmdldmFsID0gYygxLDM1NiksDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG5vcmRlcj00LCANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYnJlYWtzPWMoMToyNSkpDQojIGTDqWZpbml0aW9uIHVuZSBiYXNlIGRlIEItc3BsaW5lIGVudHJlIDEgZXQgMzU2IChsZXMgZGF0ZXMpIA0KIyBvcmRyZSA0IChjbGFzc2lxdWUpIA0KIyBicmVha3MgOiBjb3VwdXJlDQoNCiMgT24gZmFpdCBsJ2FqdXN0ZW1lbnQgcG91ciBkaWZmw6lyZW50ZXMgdmFsZXVycyBkZSBsYW1iZGEgcG91ciBtaW5pbWlzZXIgbGUgY3JpdMOocmUgZGUgcMOpbmFsaXTDqQ0KIyBPbiB2ZXV0IGxhIGZvbmN0aW9uIGxhIHBsdXMgcHJvY2hlIGRlcyBwb2ludHMgZXQgbGEgbW9pbnMgb3NjaWxsYW50ZSBncsOiY2Ugw6AgbGEgcMOpbmFsaXTDqQ0KDQpnY3YgPSByZXAoMCwzMCkgIyBncmlsbGUgZGUgbGFtYmRhDQoNCmZvciAoaSBpbiAxOjMwKXsNCiAgDQogIGxhbWJkYSA9IGV4cChpLTEwKQ0KICANCiAgZmRwYXIgPSBmZFBhcihzcGxiYXNpcyxMZmRvYmogPSAyLGxhbWJkYT1sYW1iZGEpICMgY2FsY3VsIGRlIGxhIHZhbGV1ciBkZSBww6luYWxpdMOpDQogICMgTGZkb2ogPSAyIDogb3JkcmUgZGUgbGEgZMOpcml2w6llIGRhbnMgbGEgcMOpbmFsaXTDqSAoZMOpcml2w6llIHNlY29uZGUpDQogIA0KICBzbW9vdGhkYXRhID0gc21vb3RoLmJhc2lzKHRwcyx5LCBmZFBhcm9iaiA9IGZkcGFyKSAjIGFqdXN0ZW1lbnQgZGUgbCdvYmpldCBmb25jdGlvbm5lbA0KICANCiAgIyBzbW9vdGguYmFzaXMgOiDDqXF1aXZhbGVudCDDoCBEYXRhMmZkIG1haXMgQVZFQyBww6luYWxpdMOpDQogICMgZG9ubmUgbGEgdmFsZXVyIGR1IGNyaXTDqHJlIFZDIGRlIE1vaW5kcmVzIENhcnLDqXMgR8OpbsOpcmFsaXPDqQ0KICANCiAgZ2N2W2ldID0gc21vb3RoZGF0YSRnY3YgIyBnY3YgOiBnZW5lcmFsIGNyb3NzIHZhbGlkYXRpb24NCn0NCnBsb3QoZ2N2KQ0Kd2hpY2gubWluKGdjdikNCmBgYA0KDQpOb3VzIGF2b25zIG9ic2VydsOpIHF1ZSBsYSB2YWxldXIgb3B0aW1hbGUgZGUgbGFtYmRhIGVzdCBsYSAxM8OobWUgdmFsZXVyLCBjb3JyZXNwb25kYW50IGF1IG1pbmltdW0uIENldHRlIHZhbGV1ciBub3VzIHBlcm1ldHRyYSBkJ8OqdHJlIHByb2NoZSBkZXMgZG9ubsOpZXMgb2JzZXJ2w6llcy4gXA0KTm91cyBhdm9ucyBjaG9pc2kgZGUgcGFyYW3DqXRyZXIgbGUgbm9tYnJlIGRlIGNvdXB1cmVzIGVudHJlIDEgZXQgMjUgY2FyIGxlcyBzaWduYXV4IHNvbnQgdHLDqHMgaXJyw6lndWxpZXJzIGV0IG5vdXMgc291aGFpdG9ucyDDqnRyZSAgcHJvY2hlLCByYWlzb25uYWJsZW1lbnQsIGR1IHNpZ25hbCBkJ29yaWdpbmUuIENlIGNob2l4IGVzdCBhcmJpdHJhaXJlIGNhciBpbCBwZXV0IGVuZ2VuZHJlciBkdSBzdXItYXBwcmVudGlzc2FnZSBzaSBsZSBub21icmUgZGUgY291cHVyZXMgZXN0IHRyb3Agw6lsZXbDqWUgcGFyIHJhcHBvcnQgYXUgc2lnbmFsIGRlIGTDqXBhcnQuDQoNCg0KTm91cyBhbGxvbnMgcmVjYWxjdWxlciBsYSBww6luYWxpdMOpIGV0IHJlZmFpcmUgbGUgbGlzc2FnZSBhdmVjIGxhIHZhbGV1ciBkZSBsYW1iZGEgbWluaW1hbGUgOiANCg0KYGBge3J9DQpsYW1iZGEgPSBleHAod2hpY2gubWluKGdjdiktMTApDQpmZHBhciA9IGZkUGFyKHNwbGJhc2lzLExmZG9iaiA9IDIsbGFtYmRhPWxhbWJkYSkgIyBjYWxjdWwgcMOpbmFsaXTDqQ0Kc21vb3RoZGF0YSA9IHNtb290aC5iYXNpcyh0cHMseSxmZFBhcm9iaiA9IGZkcGFyKSAjIGxpc3NhZ2UNCmBgYA0KDQpOb3VzIHJlcHLDqXNlbnRvbnMgc3VyIHVuIG3Dqm1lIGdyYXBoZSBsZXMgb2JzZXJ2YXRpb25zIGV0IGxhIGZvbmN0aW9uIGVzdGltw6llIHJlY29uc3RydWl0ZSDLhmYuDQoNCmBgYHtyLG1lc3NhZ2U9RkFMU0Usd2FybmluZz1GQUxTRX0NCnBsb3RmaXQuZmQoeSwjIHZhbGV1ciBkZSBjb25zb21tYXRpb24gcG91ciB1biBwYXlzDQogICAgICAgICAgIHRwcywgIyBsZXMgZGF0ZXMNCiAgICAgICAgICAgc21vb3RoZGF0YSRmZCwgIyBub3MgZG9ubsOpZXMgZXN0aW3DqWVzDQogICAgICAgICAgICMgMSDDoCAzNTYgDQogICAgICAgICAgIHBjaD0yMCwNCiAgICAgICAgICAgY2V4PTAuNSwNCiAgICAgICAgICAgbWFpbj0ibGVzIG9ic2VydmF0aW9ucyBldCBsYSBmb25jdGlvbiBlc3RpbcOpZSByZWNvbnN0cnVpdGUgy4ZmIiwNCiAgICAgICAgICAgeGxhYiA9ICJjb25zb21tYXRpb24gZCfDqW5lcmdpZSIsDQogICAgICAgICAgIHlsYWI9InRlbXBzIikNCmBgYA0KT24gYSByZXByw6lzZW50w6kgbGVzIHBvaW50cyBldCBsJ29iamV0IGZvbmN0aW9ubmVsLiANCg0KIyBJREVFIDoNCmxhIHByb2YgYSBkaXQgcXVlIMOnYSBkw6lwZW5kYWl0IGRlIG5vcyBvYmplY3RpZnMuIENvbW1lIG9uIGEgcGFzIHVuZSBiYXNlIGQnb25kZWxldHRlcywgZXN0LWNlIHF1J29uIHZhIHLDqWVsbGVtZW50IHBvdXZvaXIgcmVwcm9kdWlyZSBsZSBzaWduYWwgPw0KRG9uYyBub3RyZSBvYmplY3RpZiDDp2EgcG91cnJhaXQgw6p0cmUgZCdhdm9pciB1biBzaWduYWwgIisgbGlzc2UiID8NCsOgIHZvaXINCg0KYGBge3J9DQpmaGF0cHJpbSA9IGV2YWwuZmQodHBzLHNtb290aGRhdGEkZmQsTGZkb2JqPTEpICMgZMOpcml2w6kgcHJlbWnDqHJlDQojIGV2YWwuZmQgOiDDqXZhbHVlIHN1ciBsZXMgZGF0ZXMNCmZoYXRwcHJpbSA9IGV2YWwuZmQodHBzLHNtb290aGRhdGEkZmQsTGZkb2JqPTIpICMgZMOpcml2w6kgc2Vjb25kZQ0KbWF0cGxvdCh0cHMsY2JpbmQoZmhhdHByaW0sZmhhdHBwcmltKSx0eXBlPSJsIikNCmBgYA0KDQpMYSBkw6lyaXbDqWUgcHJlbWnDqHJlIGVzdCBlbiBub2lyIGV0IGxhIGTDqXJpdsOpZSBzZWNvbmRlIGVuIHJvdWdlLg0KDQoNCiMjIyBMaXNzYWdlIGRlIGwnZW5zZW1ibGUgZGVzIHRyYWplY3RvaXJlcw0KDQpOb3VzIGFsbG9ucyBsaXNzZXIgdW5lIHBhciB1bmUgbGVzIHNpZ25hdXggZGUgY2hhcXVlIEV0YXRzLg0KDQojIFBST0JMRU1FIElDSSBBIFJFVk9JUiANCg0KYGBge3J9DQpzcGxiYXNpcyA9IGNyZWF0ZS5ic3BsaW5lLmJhc2lzKHJhbmdldmFsID0gYygxLDM1NiksDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG5vcmRlcj00LCANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYnJlYWtzPWMoMToyNSkpDQoNCmdjdiA9IG1hdHJpeCgwLCBucm93ID0gMzAsIG5jb2wgPSAzNCkgIyAzMCB2YWxldXIgcG91ciBjaGFjdW4gZGVzIDMzIGV0YXRzDQpmb3IoZSBpbiAyOjM0KXsgIyBQb3VyIGNoYWN1biBkZXMgRXRhdHMNCiAgZm9yIChpIGluIDE6MzApew0KICAgIHkgPC0gYXMudmVjdG9yKHQodW5saXN0KGRhdGFfbG9uZ1ssIGVdKSkpDQogICAgbGFtYmRhID0gZXhwKGktMTApDQogICAgZmRwYXJUZW1wID0gZmRQYXIoc3BsYmFzaXMsTGZkb2JqID0gMixsYW1iZGE9bGFtYmRhKQ0KICAgIHNtb290aGRhdGEgPSBzbW9vdGguYmFzaXModHBzLHksZmRQYXJvYmogPSBmZHBhclRlbXApICMgUGx1cyB1biBzZXVsIGluZGl2aWR1IG1haXMgcGx1c2lldXJzIGluZGl2aWR1DQogICAgZ2N2W2ksZV0gPSBtZWFuKHNtb290aGRhdGEkZ2N2KSANCiAgIyBhdmFudCB1biBjcml0w6hyZSBkZSBWQyBwb3VyIGNoYXF1ZSBpbmRpdmlkdQ0KICAjIG1haW50ZW5hbnQgY29tbWUgbiBjb3VyYmVzIGRvbmMgbiB2YWxldXIgZGUgY3JpdMOocmUgcG91ciB1biBsYW1iZGEgZG9ubsOpDQogICMgZG9uYyBtb3llbm5lIGRlcyBjcml0w6hyZXMgZGUgVkMNCiAgfQ0KfQ0KcGxvdChnY3YpDQp3aGljaC5taW4oZ2N2KQ0KYGBgDQoNCmBgYHtyfQ0KbGFtYmRhID0gZXhwKHdoaWNoLm1pbihnY3YpLTEwKQ0KZmRwYXJUZW1wID0gZmRQYXIoc3BsYmFzaXMsTGZkb2JqID0gMixsYW1iZGE9bGFtYmRhKQ0Kc21vb3RoZGF0YSA9IHNtb290aC5iYXNpcyhhZ2UsZ3Jvd3RoJGhndG0sZmRQYXJvYmogPSBmZHBhclRlbXApDQpgYGANCg0KcGxvdGZpdC5mZCAtLVw+IHVuIGdyYXBoaXF1ZSBwYXIgaW5kaXZpZHUgKG1vaW5zIGJpZW4pDQoNCltSZXByw6lzZW50YXRpb24gZGVzIGRvbm7DqWVzIGJydXRlcyBldCBkZXMgZG9ubsOpZXMgbGlzc2VzXXsudW5kZXJsaW5lfQ0KDQpgYGB7cn0NCmZoYXRzbW9vdGggPSBldmFsLmZkKGFnZSxzbW9vdGhkYXRhJGZkKSAjIG9uIMOpdmFsdWUgbm90cmUgb2JqZXQgZm9uY3Rpb25uZWwgc3VyIG5vcyDDomdlDQoNCnBhcihtZnJvdz1jKDEsMikpDQptYXRwbG90KHRwcyxncm93dGgkaGd0bSx0eXBlPSJwIixsdHk9MSx5bGFiPSIiLG1haW49ImRvbm5lZXMgYnJ1dGVzIikNCm1hdHBsb3QodHBzLGZoYXRzbW9vdGgsdHlwZT0icCIsbHR5PTEseWxhYj0iIixtYWluPSJkb25uZWVzIGxpc3NlZXMiKQ0KYGBgDQoNClRyw6hzIHByb2NoZQ0KDQpsYSBkaWZmw6lyZW5jZSBxdWUgbCdvbiB2b2l0IHBhcyBlc3QgPw0KDQpbUmVwcsOpc2VudGF0aW9uIGRlcyByw6lzaWR1c117LnVuZGVybGluZX0NCg0KYGBge3J9DQptYXRwbG90KGFnZSxmaGF0c21vb3RoLWdyb3d0aCRoZ3RtLGx0eT0xLHR5cGU9ImwiLHlsYWI9InJlc2lkdXMiKQ0KYGBgDQoNCg0KDQoNCiMgQSBGQUlSRQ0KDQpiYXNlIGRlIHNwbGluZSBww6luYWxpc8OpDQoNCg0KDQojIFNvdXJjZXMgDQoNCi0gYmFzZSBkZSBkb25uw6llcyA6IGh0dHBzOi8vd3d3LmthZ2dsZS5jb20vZGF0YXNldHMvdHdpbmtsZTA3MDUvc3RhdGUtd2lzZS1wb3dlci1jb25zdW1wdGlvbi1pbi1pbmRpYT9mYmNsaWQ9SXdBUjN0TlZyWHBUclJsT19IVk9vYTUzYmNhVFI4YVI3UVVfTmxiZTRBaGhtZnpkSzlFUmE1WHhpZDF5aw0KLSBub21icmUgZCdoYWJpdGFudHMgcGFyIHBheXMgOiBodHRwczovL2ZyLnpodWppd29ybGQuY29tL2luLzY3MzYzMC10cmlwdXJhLz9mYmNsaWQ9SXdBUjJVYV9seDJrN3UtTmlsMDY1UHcwUzBtSzY4Mlg3ZThBdXZSNUNTN2xmcHNiVUJQSWxFek5pd0UyUQ==</div>
 
 
 
