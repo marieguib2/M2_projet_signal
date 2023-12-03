@@ -231,7 +231,7 @@ data |>
   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie pour les Etats du Sud de l'inde") +
   theme_minimal()
 
-data_complete_reg |> 
+data |> 
   filter(Regions=="WR") |> 
   ggplot(aes(x = Date, y = Consommation,color = Etat)) +
   geom_line() +
@@ -300,6 +300,7 @@ abline(v = 356, lty = 2)
 ## Lissage d'une trajectoire
 
 ```{r}
+i = 1
 y <- as.vector(t(unlist(data_long[, i]))) # courbe du premier Etat : Punjab
 tps <- 1:356
 plot(tps,y,type="l", main = "Consommation d'énergie du Punjab")
@@ -386,7 +387,6 @@ matplot(tps,cbind(fhatprim,fhatpprim),type="l")
 ```
 
 La dérivée première est en noir et la dérivée seconde en rouge.
-
 
 ### Lissage de l'ensemble des trajectoires
 
