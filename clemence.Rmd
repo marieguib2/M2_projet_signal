@@ -9,6 +9,8 @@ output: html_notebook
 library(tidyverse)
 library(ggplot2)
 library(readxl)
+library(tidyr)
+library(fda)
 ```
 
 # Notre base de données
@@ -16,12 +18,12 @@ library(readxl)
 Notre étude porte sur l'analyse de la consommation d'énergie dans les 33 Etats d'Inde. Il est à noter que l’Inde est le troisième producteur et le troisième consommateur d’électricité au monde.
 
 
-## Import des données
+## Importation des données
 
 Dans un premier temps, nous allons importer les données.
 
 ```{r}
-data <- read.csv("long_data.csv", stringsAsFactors = T)
+data <- read.csv("long_data_2.csv", stringsAsFactors = T,sep = ";")
 
 colnames(data) <- c("Etat", "Regions", "latitude", "longitude", "Date", "Consommation")
 data <- data[,-c(3,4)]
@@ -29,7 +31,7 @@ summary(data)
 # View(data)
 ```
 
-Grâce à ce résumé statistique, nous pouvons voir que les valeurs de nos données sont assez étendues.\
+Grâce à ce résumé statistique, nous pouvons voir que les valeurs de nos données de consommation d'énergie sont assez étendues : elles sont comprises entre 0.3 et 522.1 Méga Units.\
 
 ```{r}
 data$Etat[which.max(data$Consommation)]
@@ -39,7 +41,7 @@ data$Etat[which.min(data$Consommation)]
 En effet, certaines valeurs journalières sont très faibles (inférieures à 1) alors que d'autres sont 500 fois plus élevées. Par exemple, le Maharashtra qui présente certaines valeurs très importantes en opposition avec le Sikkim. 
 
 Concernant notre base de données, elle décrit la consommation d'énergie dans **33 Etats** d'Inde entre 2019 et 2020. \
-Nous avons 16 599 lignes, soit **503 points de mesure** par pays (503*33). Les données sont journalières, exprimées en Mega Units.
+Nous avons 16 434 lignes, soit **498 points de mesure** par pays (498*33). Les données sont journalières, exprimées en Mega Units.
 
 ```{r}
 dim(data)
@@ -51,11 +53,11 @@ dim(data)
 Nous allons transformer notre variable Date au format date pour poursuivre l'étude correctement.
 
 ```{r}
-data$Date <- as.Date(data$Date, format = "%d/%m/%Y %H:%M:%S")
+data$Date <- as.Date(data$Date, format = "%d/%m/%Y %H:%M")
 str(data) # Vérification
 ```
 
-Pour simplifier notre analyse, nous allons nous concentrer seulement sur une seule année : 
+Pour simplifier notre analyse, nous allons nous concentrer seulement sur l'année 2019 : 
 
 ```{r}
 data <- data |> 
@@ -93,22 +95,19 @@ Nous allons donc travailler avec les valeurs initiales.
 Nous allons tout d'abord représenter simplement nos données pour pouvoir faire ressortir les informations importantes. 
 
 ```{r}
-# Utilisation de la fonction gather pour mettre en forme les données
-# data_long <- tidyr::gather(normalized_energy, key = "Etat", value = "Consommation", -Date)
-
-# Création du graphique avec ggplot
 ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat") +
   theme_minimal()
 ```
 Ce graphique nous montre que nos données sont très irrégulières. \
 
-[Représentation des données en deux parties].{underline}
+[Représentation des données en différentes parties].{underline}
 
-Pour pouvoir que les informations soient plus lisibles, nous avons décidé de séparer en plusieurs parties nos données. \
+Pour que les informations soient plus lisibles, nous avons décidé de séparer en plusieurs parties nos données.
 Nous avons fixé des seuils par rapport à la moyenne de consommations des Etats pour réaliser ces graphiques. 
 
+[Calcul de la moyenne par Etat].{underline}
 
 On calcule d'abord la moyenne par Etat et on ajoute cette moyenne a un nouveau dataframe : 
 
@@ -117,7 +116,11 @@ moyenne_par_etat <- tapply(data$Consommation, data$Etat, mean)
 moyenne_par_etat <- data.frame(Etat = names(moyenne_par_etat), Moyenne = moyenne_par_etat)
 
 data_complete <- merge(data,moyenne_par_etat, by = "Etat") 
+head(data_complete)
 ```
+
+
+[Séparation de notre jeu de données].{underline}
 
 On sépare les données en 3 catégories : 
 
@@ -135,88 +138,55 @@ data_sup <- data_complete |>
 # data_sup
 ```
 
+[Représentations graphiques].{underline}
+
 ```{r}
 ggplot(data_inf, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant moins de 50 Mega Units en moyenne") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat", subtitle = "Etats consommant moins de 50 Mega Units en moyenne") +
   theme_minimal()
 
 ggplot(data_moy, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant entre 50 et 200 Mega Units en moyenne") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat", subtitle = "Etats consommant entre 50 et 200 Mega Units en moyenne") +
   theme_minimal()
 
 ggplot(data_sup, aes(x = Date, y = Consommation, color = Etat)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant plus de 200 Mega Units en moyenne") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat", subtitle = "Etats consommant plus de 200 Mega Units en moyenne") +
   theme_minimal()
 ```
 
+Grâce à ces représentations, il est plus facile d'observer et d'étudier l'allure de nos données.\
 
-[Représentation selon la région]{.underline}
+Pour la plupart des Etats, leur consommation varie beaucoup tout au long de l'année et en quelques jours leur consommation peut doubler ou bien diminuer subitement.
 
-L'inde est divisé en 5 regions : le Nord (NR), Nord-Est (NER), le Sud (SR), l'Est (ER) et l'Ouest (WR)
-Nous traçons les consommations en fonction des régions (une couleur par région)
-
-Nous calculons les moyennes des consommations par Regions:
-
+Cependant certains Etats comme le Tripura possède une consommation très faible, et peu de variations dans son signal sont observées :
 
 ```{r}
-moyenne_par_reg <- tapply(data$Consommation, data$Regions, mean)
-moyenne_par_reg <- data.frame(Regions = names(moyenne_par_reg), Moyenne_reg = moyenne_par_reg)
-# 
-data_complete_reg <- merge(data_complete,moyenne_par_reg, by = "Regions")
-```
-
-
-```{r}
-data_inf <- data_complete_reg |> 
-  filter(Moyenne_reg <= 66)
-# data_inf
-
-data_moy <- data_complete_reg |> 
-  filter(Moyenne_reg > 66 & Moyenne_reg < 150)
-# data_moy
-
-data_sup <- data_complete_reg |> 
-  filter(Moyenne_reg >= 150)
-# data_sup
-```
-
-
-```{r}
-ggplot(data, aes(x = Date, y = Consommation, color = Regions)) +
+data |> 
+  filter(Etat=="Tripura") |> 
+  ggplot(aes(x = Date, y = Consommation)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat", subtitle = "Etats consommant moins de 50 Mega Units en moyenne") +
   theme_minimal()
 ```
 
-
+Sa consommation varie entre 2.4 et 6.6 mega Units.
 
 ```{r}
-ggplot(data_inf, aes(x = Date, y = Consommation, color = Regions)) +
-  geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant moins de 50 Mega Units en moyenne") +
-  theme_minimal()
-
-ggplot(data_moy, aes(x = Date, y = Consommation, color = Regions)) +
-  geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant entre 50 et 200 Mega Units en moyenne") +
-  theme_minimal()
-
-ggplot(data_sup, aes(x = Date, y = Consommation, color = Regions)) +
-  geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par état", subtitle = "Pays consommant plus de 200 Mega Units en moyenne") +
-  theme_minimal()
+min(data$Consommation[data$Etat=="Tripura"])
+max(data$Consommation[data$Etat=="Tripura"])
 ```
 
-Les représentations graphiques ne nous permettent pas de bien visualiser.
+A l'opposition du Punjab qui lui possède une très grande variation dans sa consommation :
 
 ```{r}
-tapply(data$Consommation, data$Regions, mean)
+min(data$Consommation[data$Etat=="Punjab"])
+max(data$Consommation[data$Etat=="Punjab"])
 ```
-Nous observons une grande disparité entre les régions de l'Inde. En effet, le Nord-Est à une consommation très faible par rapport à l'Ouest.
 
+[Tableau des moyennes de consommation par Etat]{.underline}
 
 ```{r}
 tapply(data$Consommation, data$Etat, mean)
@@ -224,56 +194,259 @@ tapply(data$Consommation, data$Etat, mean)
 
 
 
+[Représentation selon la région]{.underline}
 
-# Lissage
-Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
+L'Inde est divisée en 5 regions : le Nord (NR), Nord-Est (NER), le Sud (SR), l'Est (ER) et l'Ouest (WR)
+Nous allons tracer les consommations en fonction des régions (une couleur par région)./
+De la même manière que les représentations précédentes, nous ne pouvons représenter les régions sur le même graphique. Sans diviser la représentation, il est difficile de bien observer les différences entre les régions.
 
-
-Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. On se ramènera à la fin au signal de départ de taille 365.
-
-
-# Lissage
-
-
-Puisque nos signaux sont irréguliers, nous avons choisi d'utiliser les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
-
-
-Le problème ici est que la longueur des courbes de consommation n'est pas de la forme $2^J$. Pour la courbe de température de longueur 365, on symétrise le signal à la fin pour atteindre une longueur de 512. 
-On se ramènera à la fin au signal de départ de taille 365.
+Nous décidons donc de représenter une région par graphique :
 
 ```{r}
-data_long <- data |> 
-  select(-2)
+data |> 
+  filter(Regions=="ER") |> 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie pour les Etats de l'Est de l'Inde") +
+  theme_minimal()
+
+data |> 
+  filter(Regions=="NER") |> 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie pour les Etats du Nord Est de l'Inde") +
+  theme_minimal()
+
+data |> 
+  filter(Regions=="NR") |> 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie pour les Etats du Nord de l'Inde") +
+  theme_minimal()
+
+data |> 
+  filter(Regions=="SR") |> 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie pour les Etats du Sud de l'inde") +
+  theme_minimal()
+
+data |> 
+  filter(Regions=="WR") |> 
+  ggplot(aes(x = Date, y = Consommation,color = Etat)) +
+  geom_line() +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie pour les Etats de l'Ouest de l'Inde") +
+  theme_minimal()
+
+```
+
+Au sein de chaque région de l'Inde, nous observons de forts contrastes de consommation d'énergie. Nous pouvons noter une différence d'échelle entre les graphiques. Par exemple, dans le Sud de l'Inde, Pondy a une faible consommation d'énergie (entre 4 et 10 mega Units) à l'opposé de Tamil Nadu où sa consommation varie entre 200 et 370 mega Units.
+
+Il serait intéressant de consulter l'avis d'un économiste ou politicien pour analyser et comprendre ces grandes disparités au sein des régions de l'Inde.
+
+
+Nous construisons le tableau des moyennes de consommation par région :
+
+```{r}
+tapply(data$Consommation, data$Regions, mean)
+```
+
+Nous observons une hétérogénéité en termes de consommation entre les régions de l'Inde. En effet, le Nord-Est a une consommation très faible par rapport à l'Ouest.
+
+
+# Ondelettes
+
+
+Puisque nos signaux sont irréguliers, notre choix de lissage s'est tourné vers les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
+
+Pour pouvoir poursuivre cette étude, nous avons du transformer notre dataframe de départ pour avoir chaque Etat en colonne avec la valeur de consommation en ligne pour chaque point de mesure. 
+
+```{r, message=FALSE, warning=FALSE}
+data_long <- data.frame("Etat" = data$Etat,"Date"= data$Date,"Consommation" = data$Consommation)
 
 data_long <- data_long |> 
   pivot_wider(names_from = "Etat", values_from = "Consommation")
+head(data_long)
 ```
 
+Le problème ici est que la longueur des courbes de consommation n'est pas de la forme $2^J$. Ces courbes sont de longueur 356, on symétrise le signal à la fin pour atteindre une longueur de 512. 
+On se ramènera à la fin au signal de départ de taille 356.
+
+Nous représentons le signal pour un Etat (ici le Punjab) :
 
 ```{r}
 i = 2
 y <- as.vector(t(unlist(data_long[, i])))
+# 
+# plot(1:356,y,type="l",main="Signal de départ", ylab = "Consommation", xlab="Jour")
+# 
+# # Créer un signal symétrisé
+# ysym = c(y, rev(tail(y, n= 512-length(y)))) # on choisit 512 pour avoir une puissance de 2
+# 
+# # Tracer le signal symétrisé
+# plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation", xlab = "Jour")
+# 
+# # Ajouter une ligne verticale à la position 
+# # axe de symétrie : 361 jours 
+# abline(v = 356, lty = 2)
+```
 
-plot(1:361,y,type="l",main="Signal de départ", ylab = "Consommation", xlab="Jour")
+# CONTINUER A COMMENTER PLUS TARD
 
-# Créer un signal symétrisé
-ysym = c(y, rev(tail(y, n= 512-length(y)))) # on choisit 512 pour avoir une puissance de 2
+# Lissage par moindres carrés pénalisés
 
-# Tracer le signal symétrisé
-plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation", xlab = "Jour")
+# JUSTIFIER POURQUOI CE LISSAGE
 
-# Ajouter une ligne verticale à la position 
-# axe de symétrie : 361 jours 
-abline(v = 361, lty = 2)
+## Lissage d'une trajectoire
+
+```{r}
+y <- as.vector(t(unlist(data_long[, i]))) # courbe du premier Etat : Punjab
+tps <- 1:356
+plot(tps,y,type="l", main = "Consommation d'énergie du Punjab")
+```
+
+```{r}
+i = 10
+y <- as.vector(t(unlist(data_long[, i]))) # courbe du dixième Etat : Chhattisgarh
+tps <- 1:356
+plot(tps,y,type="l", main = "Consommation d'énergie du Chhattisgarh")
+```
+
+1. Lissage par moindres carrés pénalisés sur la première courbe
+
+
+```{r,message=FALSE,warning=FALSE}
+splbasis = create.bspline.basis(rangeval = c(min(data$Consommation),max(data$Consommation)),
+                                norder=6, 
+                                breaks=seq(min(data$Consommation),
+                                           max(data$Consommation),length=35))
+# définition une base de B-spline entre 1 et 356 (les dates) 
+# ordre 4 (classique) 
+# breaks : coupure
+
+
+plot(splbasis)
+```
+```{r}
+summary(splbasis)
 ```
 
 
+```{r}
+# On fait l'ajustement pour différentes valeurs de lambda pour minimiser le critère de pénalité
+# On veut la fonction la plus proche des points et la moins oscillante grâce à la pénalité
 
-# A FAIRE
+gcv = rep(0,50) # grille de lambda
 
-base de spline pénalisé
+for (i in 1:50){
+  
+  lambda = exp(i-10)
+  
+  fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) # calcul de la valeur de pénalité
+  # Lfdoj = 2 : ordre de la dérivée dans la pénalité (dérivée seconde)
+  
+  smoothdata = smooth.basis(tps,y, fdParobj = fdpar) # ajustement de l'objet fonctionnel
+  
+  # smooth.basis : équivalent à Data2fd mais AVEC pénalité
+  # donne la valeur du critère VC de Moindres Carrés Généralisé
+  
+  gcv[i] = smoothdata$gcv # gcv : general cross validation
+}
+plot(gcv)
+which.min(gcv)
+```
 
-base de fourier avec bcp de noeuds
+Nous avons observé que la valeur optimale de lambda est la 4ème valeur, correspondant au minimum. Cette valeur nous permettra d'être proche des données observées. \
+Nous avons choisi de paramétrer le nombre de coupures à 35 car les signaux sont très irréguliers et nous souhaitons être  proche, raisonnablement, du signal d'origine. Ce choix est arbitraire car il peut engendrer du sur-apprentissage si le nombre de coupures est trop élevée par rapport au signal de départ.
+
+
+Nous allons recalculer la pénalité et refaire le lissage avec la valeur de lambda minimale : 
+
+```{r}
+lambda = exp(which.min(gcv)-10)
+fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) # calcul pénalité
+smoothdata = smooth.basis(tps,y,fdParobj = fdpar) # lissage
+```
+
+Nous représentons sur un même graphe les observations et la fonction estimée reconstruite ˆf.
+
+```{r,message=FALSE,warning=FALSE}
+plotfit.fd(y,# valeur de consommation pour un pays
+           tps, # les dates
+           smoothdata$fd, # nos données estimées
+           # 1 à 356 
+           pch=20,
+           cex=0.5,
+           main="les observations et la fonction estimée reconstruite ˆf",
+           ylab = "consommation d'énergie",
+           xlab="temps",
+           xlim = c(0,356))
+```
+On a représenté les points et l'objet fonctionnel. 
+
+# IDEE :
+la prof a dit que ça dépendait de nos objectifs. Comme on a pas une base d'ondelettes, est-ce qu'on va réellement pouvoir reproduire le signal ?
+Donc notre objectif ça pourrait être d'avoir un signal "+ lisse" ?
+à voir
+
+```{r}
+fhatprim = eval.fd(tps,smoothdata$fd,Lfdobj=1) # dérivé première
+# eval.fd : évalue sur les dates
+fhatpprim = eval.fd(tps,smoothdata$fd,Lfdobj=2) # dérivé seconde
+matplot(tps,cbind(fhatprim,fhatpprim),type="l")
+```
+
+La dérivée première est en noir et la dérivée seconde en rouge.
+
+
+# Statistiques exploratoire
+
+## Courbe lissée
+
+[Pour un Etat]{.underline}
+
+Nous représentons les données brutes et les données lissées pour un Etat
+
+```{r}
+fhatsmooth = eval.fd(1:356,smoothdata$fd)
+par(mfrow=c(1,2))
+matplot(1:356,data_long[,3],type="l",lty=1,ylab="",main="donnees brutes")
+matplot(1:356,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissées")
+```
+
+### Moyenne fonctionnelle
+
+Nous calculons la moyenne de notre objet fonctionnel :
+
+```{r}
+mean_smooth_data = mean.fd(smoothdata$fd)
+mean_smooth_data
+```
+
+```{r}
+ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
+  geom_line() +
+  geom_line(x mean_smooth_data)+
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat") +
+  theme_minimal()
+
+# matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
+# lines(mean_smooth_data,lwd=2)
+```
+### Ecart-type fonctionnel
+
+```{r}
+sd_smooth_data= sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
+```
+
+```{r}
+matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
+fnmoy = eval.fd(1:365,mean_smooth_data)
+fnsd  = eval.fd(1:365,sd_smooth_data)
+lines(fnmoy,lwd=2)
+lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
+lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
+```
 
 
 # Sources 
