@@ -418,8 +418,8 @@ which.min(gcv)
 
 ```{r}
 lambda = exp(which.min(gcv)-10)
-fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
-smoothdata = smooth.basis(age,growth$hgtm,fdParobj = fdparTemp)
+fdpar = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+smoothdata = smooth.basis(tps,y,fdParobj = fdpar)
 ```
 
 plotfit.fd --\> un graphique par individu (moins bien)
