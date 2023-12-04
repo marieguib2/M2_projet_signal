@@ -300,6 +300,7 @@ y <- as.vector(t(unlist(data_long[, i])))
 ## Lissage d'une trajectoire
 
 ```{r, message=FALSE, warning=FALSE}
+tps <- 1:356
 # Initialisation d'une matrice pour stocker les résultats pour chaque colonne
 smoothed_data <- list()
 
@@ -342,7 +343,7 @@ matplot(smoothed_data)
 
 ```{r}
 y <- as.vector(t(unlist(data_long[, i]))) # courbe du premier Etat : Punjab
-tps <- 1:356
+
 plot(tps,y,type="l", main = "Consommation d'énergie du Punjab")
 ```
 
