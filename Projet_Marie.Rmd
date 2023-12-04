@@ -365,8 +365,37 @@ Nous allons recalculer la pénalité et refaire le lissage avec la valeur de lam
 ```{r}
 lambda = exp(which.min(gcv)-10)
 fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) # calcul pénalité
-smoothdata = smooth.basis(tps,y,fdParobj = fdpar) # lissage
+# smoothdata = smooth.basis(tps,y,fdParobj = fdpar) # lissage
 ```
+
+```{r}
+library(fda)
+
+# Créer une liste de fonctions lissées avec des réplications
+smoothed_data_list <- list()
+for (i in 1:356) {
+  cat("Iteration:", i, "\n")
+  
+  # smooth_data <- smooth.basis(tps, y[i], fdParobj = fdpar)
+  
+  # Vérifier les dimensions de tps et y[i]
+  cat("Dimensions de tps:", length(tps), "\n")
+  cat("Dimensions de y[i]:", length(y[i]), "\n")
+  
+  
+  smoothed_data_list[[i]] <- smooth_data$fd
+}
+
+# Appliquer l'ACP sur les données lissées avec réplications
+pca_result_smooth <- pca.fd(smoothed_data_list, nharm = 2)
+
+# Afficher les résultats
+summary(pca_result_smooth)
+```
+
+
+
+
 
 Nous représentons sur un même graphe les observations et la fonction estimée reconstruite ˆf.
 
@@ -404,6 +433,10 @@ La dérivée première est en noir et la dérivée seconde en rouge.
 ```{r}
 mean
 ```
+
+
+
+
 
 
 
