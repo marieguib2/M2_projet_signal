@@ -1,6 +1,9 @@
 ---
 title: "Analyse des données de consommations d'énergie en Inde"
 output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 # Environnement de travail
@@ -15,8 +18,9 @@ library(fda)
 
 # Notre base de données
 
-Notre étude porte sur l'analyse de la consommation d'énergie dans les 33 Etats d'Inde. Il est à noter que l’Inde est le troisième producteur et le troisième consommateur d’électricité au monde.
-
+Notre étude porte sur l'analyse de la consommation d'énergie dans les 33
+Etats d'Inde. Il est à noter que l'Inde est le troisième producteur et
+le troisième consommateur d'électricité au monde.
 
 ## Importation des données
 
@@ -31,51 +35,66 @@ summary(data)
 # View(data)
 ```
 
-Grâce à ce résumé statistique, nous pouvons voir que les valeurs de nos données de consommation d'énergie sont assez étendues : elles sont comprises entre 0.3 et 522.1 Méga Units.\
+Grâce à ce résumé statistique, nous pouvons voir que les valeurs de nos
+données de consommation d'énergie sont assez étendues : elles sont
+comprises entre 0.3 et 522.1 Méga Units.\
 
 ```{r}
 data$Etat[which.max(data$Consommation)]
 data$Etat[which.min(data$Consommation)]
 ```
 
-En effet, certaines valeurs journalières sont très faibles (inférieures à 1) alors que d'autres sont 500 fois plus élevées. Par exemple, le Maharashtra qui présente certaines valeurs très importantes en opposition avec le Sikkim. 
+En effet, certaines valeurs journalières sont très faibles (inférieures
+à 1) alors que d'autres sont 500 fois plus élevées. Par exemple, le
+Maharashtra qui présente certaines valeurs très importantes en
+opposition avec le Sikkim.
 
-Concernant notre base de données, elle décrit la consommation d'énergie dans **33 Etats** d'Inde entre 2019 et 2020. \
-Nous avons 16 434 lignes, soit **498 points de mesure** par pays (498*33). Les données sont journalières, exprimées en Mega Units.
+Concernant notre base de données, elle décrit la consommation d'énergie
+dans **33 Etats** d'Inde entre 2019 et 2020.\
+Nous avons 16 434 lignes, soit **498 points de mesure** par pays
+(498\*33). Les données sont journalières, exprimées en Mega Units.
 
 ```{r}
 dim(data)
 ```
 
-
 ## Choix de la période étudiée
 
-Nous allons transformer notre variable Date au format date pour poursuivre l'étude correctement.
+Nous allons transformer notre variable Date au format date pour
+poursuivre l'étude correctement.
 
 ```{r}
 data$Date <- as.Date(data$Date, format = "%d/%m/%Y %H:%M")
 str(data) # Vérification
 ```
 
-Pour simplifier notre analyse, nous allons nous concentrer seulement sur l'année 2019 : 
+Pour simplifier notre analyse, nous allons nous concentrer seulement sur
+l'année 2019 :
 
 ```{r}
 data <- data |> 
   filter(Date <= as.Date("2020-01-02"))
 ```
 
-On vérifie à présent que les données que l'on va analyser correspondent bien à la période choisie. 
+On vérifie à présent que les données que l'on va analyser correspondent
+bien à la période choisie.
 
 ```{r}
 min(data$Date)
 max(data$Date)
 ```
 
-## Normalisation des données 
+## Normalisation des données
 
-Au départ, nous avons voulu normaliser les données par le nombre d'habitants de chaque Etat pour que les consommations aient le même impact dans notre étude. Cependant, cette méthode s'est révélée problématique car nous avons obtenu des valeurs très proches de zéro, ce qui aurait compliqué les calculs.
+Au départ, nous avons voulu normaliser les données par le nombre
+d'habitants de chaque Etat pour que les consommations aient le même
+impact dans notre étude. Cependant, cette méthode s'est révélée
+problématique car nous avons obtenu des valeurs très proches de zéro, ce
+qui aurait compliqué les calculs.
 
-Nous avons donc choisi de réduire les données de consommation, en soustrayant la moyenne, pour continuer notre analyse avec données moins disproportionnées.
+Nous avons donc choisi de réduire les données de consommation, en
+soustrayant la moyenne, pour continuer notre analyse avec données moins
+disproportionnées.
 
 ```{r, eval=FALSE}
 moyenne_par_etat <- tapply(data$Consommation, data$Etat, mean)
@@ -86,13 +105,15 @@ for(i in 1:nrow(normalized_energy)){
 }
 ```
 
+Suite à cette normailisation, nous pouvons observer une diminution
+importante des valeurs. Mais nous obtenons des valeurs de consommations
+négatives, ce qui pose problème pour l'interprétation de nos analyses.
+Nous allons donc travailler avec les valeurs initiales.
 
-Suite à cette normailisation, nous pouvons observer une diminution importante des valeurs. Mais nous obtenons des valeurs de consommations négatives, ce qui pose problème pour l'interprétation de nos analyses. 
-Nous allons donc travailler avec les valeurs initiales. 
+## Représentations graphiques
 
-## Représentations graphiques 
-
-Nous allons tout d'abord représenter simplement nos données pour pouvoir faire ressortir les informations importantes. 
+Nous allons tout d'abord représenter simplement nos données pour pouvoir
+faire ressortir les informations importantes.
 
 ```{r}
 ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
@@ -100,16 +121,20 @@ ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat") +
   theme_minimal()
 ```
-Ce graphique nous montre que nos données sont très irrégulières. \
+
+Ce graphique nous montre que nos données sont très irrégulières.\
 
 [Représentation des données en différentes parties].{underline}
 
-Pour que les informations soient plus lisibles, nous avons décidé de séparer en plusieurs parties nos données.
-Nous avons fixé des seuils par rapport à la moyenne de consommations des Etats pour réaliser ces graphiques. 
+Pour que les informations soient plus lisibles, nous avons décidé de
+séparer en plusieurs parties nos données. Nous avons fixé des seuils par
+rapport à la moyenne de consommations des Etats pour réaliser ces
+graphiques.
 
 [Calcul de la moyenne par Etat].{underline}
 
-On calcule d'abord la moyenne par Etat et on ajoute cette moyenne a un nouveau dataframe : 
+On calcule d'abord la moyenne par Etat et on ajoute cette moyenne a un
+nouveau dataframe :
 
 ```{r}
 moyenne_par_etat <- tapply(data$Consommation, data$Etat, mean)
@@ -119,10 +144,9 @@ data_complete <- merge(data,moyenne_par_etat, by = "Etat")
 head(data_complete)
 ```
 
-
 [Séparation de notre jeu de données].{underline}
 
-On sépare les données en 3 catégories : 
+On sépare les données en 3 catégories :
 
 ```{r}
 data_inf <- data_complete |> 
@@ -157,11 +181,15 @@ ggplot(data_sup, aes(x = Date, y = Consommation, color = Etat)) +
   theme_minimal()
 ```
 
-Grâce à ces représentations, il est plus facile d'observer et d'étudier l'allure de nos données.\
+Grâce à ces représentations, il est plus facile d'observer et d'étudier
+l'allure de nos données.\
 
-Pour la plupart des Etats, leur consommation varie beaucoup tout au long de l'année et en quelques jours leur consommation peut doubler ou bien diminuer subitement.
+Pour la plupart des Etats, leur consommation varie beaucoup tout au long
+de l'année et en quelques jours leur consommation peut doubler ou bien
+diminuer subitement.
 
-Cependant certains Etats comme le Tripura possède une consommation très faible, et peu de variations dans son signal sont observées :
+Cependant certains Etats comme le Tripura possède une consommation très
+faible, et peu de variations dans son signal sont observées :
 
 ```{r}
 data |> 
@@ -179,7 +207,8 @@ min(data$Consommation[data$Etat=="Tripura"])
 max(data$Consommation[data$Etat=="Tripura"])
 ```
 
-A l'opposition du Punjab qui lui possède une très grande variation dans sa consommation :
+A l'opposition du Punjab qui lui possède une très grande variation dans
+sa consommation :
 
 ```{r}
 min(data$Consommation[data$Etat=="Punjab"])
@@ -188,7 +217,6 @@ max(data$Consommation[data$Etat=="Punjab"])
 
 [Tableau des moyennes de consommation par Etat]{.underline}
 
-
 ```{r}
 knitr::kable(tapply(data$Consommation, data$Etat, mean),
              "simple",
@@ -196,13 +224,14 @@ knitr::kable(tapply(data$Consommation, data$Etat, mean),
              col.names = "Moyenne")
 ```
 
-
-
 [Représentation selon la région]{.underline}
 
-L'Inde est divisée en 5 regions : le Nord (NR), Nord-Est (NER), le Sud (SR), l'Est (ER) et l'Ouest (WR)
-Nous allons tracer les consommations en fonction des régions (une couleur par région)./
-De la même manière que les représentations précédentes, nous ne pouvons représenter les régions sur le même graphique. Sans diviser la représentation, il est difficile de bien observer les différences entre les régions.
+L'Inde est divisée en 5 regions : le Nord (NR), Nord-Est (NER), le Sud
+(SR), l'Est (ER) et l'Ouest (WR) Nous allons tracer les consommations en
+fonction des régions (une couleur par région)./ De la même manière que
+les représentations précédentes, nous ne pouvons représenter les régions
+sur le même graphique. Sans diviser la représentation, il est difficile
+de bien observer les différences entre les régions.
 
 Nous décidons donc de représenter une région par graphique :
 
@@ -244,10 +273,15 @@ data |>
 
 ```
 
-Au sein de chaque région de l'Inde, nous observons de forts contrastes de consommation d'énergie. Nous pouvons noter une différence d'échelle entre les graphiques. Par exemple, dans le Sud de l'Inde, Pondy a une faible consommation d'énergie (entre 4 et 10 mega Units) à l'opposé de Tamil Nadu où sa consommation varie entre 200 et 370 mega Units.
+Au sein de chaque région de l'Inde, nous observons de forts contrastes
+de consommation d'énergie. Nous pouvons noter une différence d'échelle
+entre les graphiques. Par exemple, dans le Sud de l'Inde, Pondy a une
+faible consommation d'énergie (entre 4 et 10 mega Units) à l'opposé de
+Tamil Nadu où sa consommation varie entre 200 et 370 mega Units.
 
-Il serait intéressant de consulter l'avis d'un économiste ou politicien pour analyser et comprendre ces grandes disparités au sein des régions de l'Inde.
-
+Il serait intéressant de consulter l'avis d'un économiste ou politicien
+pour analyser et comprendre ces grandes disparités au sein des régions
+de l'Inde.
 
 Nous construisons le tableau des moyennes de consommation par région :
 
@@ -257,15 +291,19 @@ knitr::kable(tapply(data$Consommation, data$Regions, mean),
              caption = "Tableau des moyennes des consommation d'énergie par région")
 ```
 
-Nous observons une hétérogénéité en termes de consommation entre les régions de l'Inde. En effet, le Nord-Est a une consommation très faible par rapport à l'Ouest.
-
+Nous observons une hétérogénéité en termes de consommation entre les
+régions de l'Inde. En effet, le Nord-Est a une consommation très faible
+par rapport à l'Ouest.
 
 # Ondelettes
 
+Puisque nos signaux sont irréguliers, notre choix de lissage s'est
+tourné vers les ondelettes car elles ont des bonnes propriétés de
+compressions et sont adaptées à ce type de données.
 
-Puisque nos signaux sont irréguliers, notre choix de lissage s'est tourné vers les ondelettes car elles ont des bonnes propriétés de compressions et sont adaptées à ce type de données. 
-
-Pour pouvoir poursuivre cette étude, nous avons du transformer notre dataframe de départ pour avoir chaque Etat en colonne avec la valeur de consommation en ligne pour chaque point de mesure. 
+Pour pouvoir poursuivre cette étude, nous avons du transformer notre
+dataframe de départ pour avoir chaque Etat en colonne avec la valeur de
+consommation en ligne pour chaque point de mesure.
 
 ```{r, message=FALSE, warning=FALSE}
 data_long <- data.frame("Etat" = data$Etat,"Date"= data$Date,"Consommation" = data$Consommation)
@@ -277,8 +315,10 @@ data_long <- as.data.frame(data_long)
 knitr::kable(head(data_long),"simple", caption = "Première ligne du tableau")
 ```
 
-Le problème ici est que la longueur des courbes de consommation n'est pas de la forme $2^J$. Ces courbes sont de longueur 356, on symétrise le signal à la fin pour atteindre une longueur de 512. 
-On se ramènera à la fin au signal de départ de taille 356.
+Le problème ici est que la longueur des courbes de consommation n'est
+pas de la forme $2^J$. Ces courbes sont de longueur 356, on symétrise le
+signal à la fin pour atteindre une longueur de 512. On se ramènera à la
+fin au signal de départ de taille 356.
 
 Nous représentons le signal pour un Etat (ici le Punjab) :
 
@@ -300,11 +340,12 @@ plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation", xlab 
 abline(v = 356, lty = 2)
 ```
 
+La méthode des ondelettes est complexe et nous ne disposons pas des
+connaissances nécessaires pour faire une analyse approndie. De plus, il
+n'est pas possible de réaliser une ACP avec les ondelettes.
 
-La méthode des ondelettes est complexe et nous ne disposons pas des connaissances nécessaires pour faire une analyse approndie.
-
-Nous nous tournons donc vers le lissage par moindres carrés pénalisés à l'aide des bases de splines
-
+Nous nous tournons donc vers le lissage par moindres carrés pénalisés à
+l'aide des bases de splines
 
 # Lissage par moindres carrés pénalisés - Base de Spline
 
@@ -313,6 +354,8 @@ Nous nous tournons donc vers le lissage par moindres carrés pénalisés à l'ai
 ## Lissage d'une trajectoire
 
 ### Pour un Etat
+
+[Représentation de la consommation d'énergie]{.underline}
 
 ```{r}
 i = 2
@@ -328,14 +371,13 @@ tps <- 1:356
 plot(tps,y,type="l", main = "Consommation d'énergie du Chhattisgarh")
 ```
 
-#### Lissage par moindres carrés pénalisés sur la première courbe
-
+[Lissage par moindres carrés pénalisés sur la première
+courbe]{.underline}
 
 ```{r,message=FALSE,warning=FALSE}
-splbasis = create.bspline.basis(rangeval = c(min(data$Consommation),max(data$Consommation)),
+splbasis = create.bspline.basis(rangeval = c(1,356),
                                 norder=6, 
-                                breaks=seq(min(data$Consommation),
-                                           max(data$Consommation),length=35))
+                                breaks=seq(1,356,length=35))
 # définition une base de B-spline entre 1 et 356 (les dates) 
 # ordre 4 (classique) 
 # breaks : coupure
@@ -347,7 +389,14 @@ plot(splbasis)
 ```{r}
 summary(splbasis)
 ```
-# a commenter
+
+Il s'agit d'une base de type "bspline" ce qui signifie qu'elle utilise
+les fonctions B-splines pour modéliser les données. Dans cette base, il
+y a 39 fonctions de base, utilisées pour construire la représentation
+fonctionnelle des données.
+
+La plage des données s'étend entre 1 et 356, correspondant à nos temps
+de mesure.
 
 ```{r}
 i = 2
@@ -363,7 +412,9 @@ plot(gcv)
 which.min(gcv)
 ```
 
-# A COMMENTER
+Nous obtenons une valeur de lambda égale à 19 pour l'Etat du Punjab.
+
+Nous évaluons notre base de spline avec cette valeur optimal de lambda.
 
 ```{r}
 lambda = exp(which.min(gcv)-10)
@@ -371,7 +422,8 @@ fdparTemp = fdPar(splbasis,Lfdobj = 4,lambda=lambda)
 smoothdata = smooth.basis(tps,y,fdParobj = fdpar)
 ```
 
-Nous représentons sur un même graphe les observations et la fonction estimée reconstruite ˆf.
+Nous représentons sur un même graphe les observations et la fonction
+estimée reconstruite ˆf.
 
 ```{r,message=FALSE,warning=FALSE}
 plotfit.fd(y,# valeur de consommation pour un pays
@@ -384,10 +436,13 @@ plotfit.fd(y,# valeur de consommation pour un pays
            ylab = "consommation d'énergie",
            xlab="temps")
 ```
-# PB SIGNAL TROP LONG
 
+Nous obtenons une fonction estimée lisse pour l'Etat du Punjab, beaucoup
+moins irrégulière que nos données de base, et qui explique le
+comportement de la consommation d'énergie du Punjab sur une année.
 
-Représente les points et l'objet fonctionnel ajusté dessus Objet pas trop oscillante et qui suit les points (peu ne pas suivre exactement si bruit de mesure)
+Nous représentons la dérivée première et la dérivée seconde sur le même
+graphique :
 
 ```{r}
 fhatprim = eval.fd(tps,smoothdata$fd,Lfdobj=1)
@@ -395,36 +450,50 @@ fhatpprim = eval.fd(tps,smoothdata$fd,Lfdobj=2)
 matplot(tps,cbind(fhatprim,fhatpprim),type="l")
 ```
 
+La dérivée première en noir, qui correspond à la vitesse de croissance,
+n'est pas très lisse et indique donc que par moment dans l'année, la
+consommation d'énergie diminue ou augmente rapidement. Par exemple au
+niveau du 20ème et 140ème jour, sa consommation d'énergie décroit
+rapidement. A la fin de l'année, celle-ci explose.
+
+Les dérivées obtenues sont régulières (on a pris une base d'ordre plus
+élevé, égal à 6) et le lissage est contraint par la rugosité de la
+dérivée seconde avec une pénalité sur la dérivée d'ordre 4.
 
 ### Pour l'ensemble des Etats
 
-On fait l'ajustement pour différentes valeurs de lambda pour minimiser le critère de pénalité.
-On veut la fonction la plus proche des points et la moins oscillante grâce à la pénalité
+[Lissage par moindre carrés pénalisés]{.underline}
 
+On fait l'ajustement pour différentes valeurs de lambda pour minimiser
+le critère de pénalité.\
+On veut la fonction la plus proche des points et la moins oscillante
+grâce à la pénalité
 
 ```{r}
-gcv = rep(0,30) # grille de lambda
+# Initialisation d'une grille de lambda
+gcv = rep(0,30) 
 
 for (i in 1:30){
   lambda = exp(i-10)
-  fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) 
-  # calcul de la valeur de pénalité
-  # Lfdoj = 4 : ordre de la dérivée dans la pénalité (dérivée seconde)
-  
-  smoothdata = smooth.basis(tps,as.matrix(data_long[,c(-1)]), fdParobj = fdpar)   # ajustement de l'objet fonctionnel
-  # donne la valeur du critère VC de Moindres Carrés Généralisé
-  
-  gcv[i] = mean(smoothdata$gcv) # gcv : general cross validation
+  fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda)
+  smoothdata = smooth.basis(tps,as.matrix(data_long[,c(-1)]), fdParobj = fdpar)
+  gcv[i] = mean(smoothdata$gcv) 
 }
 plot(gcv)
 which.min(gcv)
 ```
 
-Nous avons observé que la valeur optimale de lambda est la 16ème valeur, correspondant au minimum. Cette valeur nous permettra d'être proche des données observées. \
-Nous avons choisi de paramétrer le nombre de coupures à 35 car les signaux sont très irréguliers et nous souhaitons être  proche, raisonnablement, du signal d'origine. Ce choix est arbitraire car il peut engendrer du sur-apprentissage si le nombre de coupures est trop élevée par rapport au signal de départ.
+Nous avons observé que la valeur optimale de lambda est la 14ème valeur,
+correspondant au minimum. Cette valeur nous permettra d'être proche des
+données observées.\
+Nous avons choisi de paramétrer le nombre de coupures à 35 car les
+signaux sont très irréguliers et nous souhaitons être proche, mais
+raisonnablement, du signal d'origine. Ce choix est arbitraire car il
+peut engendrer du sur-apprentissage si le nombre de coupures est trop
+élevée par rapport au signal de départ.
 
-
-Nous allons recalculer la pénalité et refaire le lissage avec la valeur de lambda minimale : 
+Nous allons recalculer la pénalité et refaire le lissage avec la valeur
+de lambda minimale :
 
 ```{r}
 lambda = exp(which.min(gcv)-10)
@@ -432,38 +501,40 @@ fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) # calcul pénalité
 smoothdata = smooth.basis(tps,as.matrix(data_long[,c(-1)]),fdParobj = fdpar) # lissage
 ```
 
-
-On a représenté les points et l'objet fonctionnel. 
+Nous évaluons notre objet fonctionnel à chaque point de temps :
 
 ```{r}
 fhatsmooth <- eval.fd(tps, smoothdata$fd)
 ```
 
+[Représentation pour l'ensemble des Etats]{.underline}
 
-#### Représentation pour l'ensemble des Etats
-
-Nous représentons les observations et la fonction estimée reconstruite ˆf.
+Nous représentons les observations et la fonction estimée reconstruite
+ˆf.
 
 ```{r}
 matplot(tps,data_long[,c(-1)],type="l",lty=1,ylab="",main="donnees brutes")
 matplot(tps,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissees")
 ```
 
+Nous obtenons des courbes lissées, moins irrégulières, qui explique bien
+la tendance de la consommation d'énergie pour chacun des Etats.
 
+Lors de la création de notre base de spline, nous avons choisi 35 coupures, ce qui biaise forcément notre analyse. Avec ces courbes lissées, les analyses ne sont pas exhaustives pour éviter le sur-apprentissage. Avec ces courbes, nous pouvons supposer qu'il y a plus de variabilité en hiver qu'en été.
 
-# IDEE :
-la prof a dit que ça dépendait de nos objectifs. Comme on a pas une base d'ondelettes, est-ce qu'on va réellement pouvoir reproduire le signal ?
-Donc notre objectif ça pourrait être d'avoir un signal "+ lisse" ?
-à voir
+Nous représentons maintenant la dérivée première et seconde pour étudier
+les vitesses de croissance et les accélérations de croissance.
 
 ```{r}
 fhatprim = eval.fd(tps,smoothdata$fd,Lfdobj=1) # dérivé première
-# eval.fd : évalue sur les dates
 fhatpprim = eval.fd(tps,smoothdata$fd,Lfdobj=2) # dérivé seconde
-matplot(tps,cbind(fhatprim,fhatpprim),type="l")
+matplot(tps,
+        fhatprim,
+        type="l",
+        main = "Dérivée première")
+matplot(tps, fhatpprim, type = "l",
+        main = "Dérivée seconde")
 ```
-
-
 
 # Statistiques exploratoire
 
@@ -511,19 +582,22 @@ cov = var.fd(smoothdata$fd)
 surfcov = eval.bifd(seq(1,356,length=35),seq(1,356,length=35),cov)
 ```
 
-Pour le tracé d'une surface, il est préférable de choisir un nombre modéré de points dans la grille d'évaluation (la représentation est rapidement illisible dans le cas contraire). Ici, nous choisissons arbitrairement 30 points répartis entre 1 et 365.
+Pour le tracé d'une surface, il est préférable de choisir un nombre
+modéré de points dans la grille d'évaluation (la représentation est
+rapidement illisible dans le cas contraire). Ici, nous choisissons
+arbitrairement 30 points répartis entre 1 et 365.
 
 ```{r}
 persp(surfcov,col="gray",theta=30,xlab="jours",ylab="jours",zlab="covariance")
 ```
+
 # A COMMENTER
 
 ```{r}
 contour(surfcov)
 ```
 
-Ligne de niveau
-# A COMMENTER
+Ligne de niveau \# A COMMENTER
 
 ### Représentation graphique en couleur
 
@@ -553,7 +627,6 @@ persp(cor,col="gray",theta=90,
 filled.contour(cor)
 ```
 
-
 ### ACP fonctionnelle
 
 ```{r}
@@ -562,8 +635,7 @@ ACPF$varprop
 cumsum(ACPF$varprop)
 ```
 
-La première composante explique 99% de la variabilité. 
-
+La première composante explique environ 99% de la variabilité.
 
 ### Représentations des composantes principales
 
@@ -573,24 +645,37 @@ Nous représentons en premier lieu les composantes principales obtenues
 plot(ACPF$harmonics)
 ```
 
-La première est en noir est tout le temps positive.
+La première composante (en noir) est tout le temps positive.
+Globalement, elle a quelques variations, environ au 30ème, 140ème et
+280ème jour de l'année. Elle a donc tendance à être plus élevé en hiver.
 
-
-Donc plus de poids dans les mois d'hiver et moins de poids dans les mois d'été
-
-Ou, pour une interprétation plus aisée, la moyenne augmentée ou diminuée des premières fonctions propres.
+Pour une interprétation plus aisée, on représente la moyenne augmentée
+ou diminuée des premières fonctions propres.
 
 On peut utilisée la fonction `plot.pca.fd` pour cette représentation.
 
 ```{r}
 plot.pca.fd(ACPF)
 ```
-Il est logique de retrouver des graphiques avec des courbes quasiments égales à 0 car la première composante explique quasiment 100% de la variabilité.
+
+Pour la première fonction propre:
+
+-   La courbe en noir représente la moyenne
+
+-   La courbe avec des "-" représente la moyenne - alpha \* la première
+    composantes principales
+
+-   La courbe avec des "+" représente la moyenne + alpha \* la première
+    composantes principales
+
+
+Comme évoqué précédemment, nous pouvons supposer qu'il y a plus de variabilité en hiver qu'en été.
 
 
 ### Représentation des individus
 
-[Représentation des individus dans le premier plan factoriel]{.underline}
+[Représentation des individus dans le premier plan
+factoriel]{.underline}
 
 Les scores des individus sont stockés dans la matrice `scores` de `ACPF`
 
@@ -610,16 +695,25 @@ text(ACPF$scores[,1],
 legend("topleft",legend = levels(climat),col=1:4,lty=1)
 ```
 
-Nous arrivons à distinguer les consommations d'énergie selon la région. Cependant, nous observons quelques exceptions.
+Nous arrivons à distinguer les consommations d'énergie selon la région.
+Cependant, nous observons quelques exceptions.
 
-Pour la première compostante principale (abscisse), les Etats concentrés à droite du graphique présentent des valeurs de consommations d'énergie élevées. Par exemple, Telangana et l'Etat du Madhya Pradesh (MP) et Gujarat sont des grands consommateurs d'énergies.
+Pour la première compostante principale (abscisse), les Etats concentrés
+à droite du graphique présentent des valeurs de consommations d'énergie
+élevées. Par exemple, Telangana et l'Etat du Madhya Pradesh (MP) et
+Gujarat sont des grands consommateurs d'énergies.
 
-Pour la deuxième composante principale (ordonnée), pour les Etats situés en haut du graphique, cela indique que leur consommation d'énergie est très variable selon les périodes de l'année. L'Etat du Punjab et Haryana présentent beaucoup d'écarts de valeurs. \ 
-Pour les petites valeurs, les Etats présentent des consommations plus stables. Cette observation est en adéquation avec les premières représentations graphiques que nous avons réalisées au début de ce rapport.
+Pour la deuxième composante principale (ordonnée), pour les Etats situés
+en haut du graphique, cela indique que leur consommation d'énergie est
+très variable selon les périodes de l'année. L'Etat du Punjab et Haryana
+présentent beaucoup d'écarts de valeurs.   Pour les petites valeurs, les
+Etats présentent des consommations plus stables. Cette observation est
+en adéquation avec les premières représentations graphiques que nous
+avons réalisées au début de ce rapport.
 
+# Sources
 
-
-# Sources 
-
-- base de données : https://www.kaggle.com/datasets/twinkle0705/state-wise-power-consumption-in-india?fbclid=IwAR3tNVrXpTrRlO_HVOoa53bcaTR8aR7QU_Nlbe4AhhmfzdK9ERa5Xxid1yk
-- nombre d'habitants par pays : https://fr.zhujiworld.com/in/673630-tripura/?fbclid=IwAR2Ua_lx2k7u-Nil065Pw0S0mK682X7e8AuvR5CS7lfpsbUBPIlEzNiwE2Q
+-   base de données :
+    <https://www.kaggle.com/datasets/twinkle0705/state-wise-power-consumption-in-india?fbclid=IwAR3tNVrXpTrRlO_HVOoa53bcaTR8aR7QU_Nlbe4AhhmfzdK9ERa5Xxid1yk>
+-   nombre d'habitants par pays :
+    <https://fr.zhujiworld.com/in/673630-tripura/?fbclid=IwAR2Ua_lx2k7u-Nil065Pw0S0mK682X7e8AuvR5CS7lfpsbUBPIlEzNiwE2Q>
