@@ -1,6 +1,8 @@
 ---
 title: "Analyse des données de consommations d'énergie en Inde"
-output: html_notebook
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
 # Environnement de travail
