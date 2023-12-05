@@ -299,6 +299,10 @@ y <- as.vector(t(unlist(data_long[, i])))
 
 ## Lissage d'une trajectoire
 
+
+
+### Pour un individu
+
 ```{r}
 y <- as.vector(t(unlist(data_long[, i]))) # courbe du premier Etat : Punjab
 tps <- 1:356
@@ -327,6 +331,7 @@ splbasis = create.bspline.basis(rangeval = c(min(data$Consommation),max(data$Con
 
 plot(splbasis)
 ```
+
 ```{r}
 summary(splbasis)
 ```
@@ -399,10 +404,54 @@ matplot(tps,cbind(fhatprim,fhatpprim),type="l")
 La dérivée première est en noir et la dérivée seconde en rouge.
 
 
-# Moyenne et variance
+# Statistiques exploratoire
+
+## Courbe lissée
+
+[Pour un Etat]{.underline}
+
+Nous représentons les données brutes et les données lissées pour un Etat
 
 ```{r}
-mean
+fhatsmooth = eval.fd(1:356,smoothdata$fd)
+par(mfrow=c(1,2))
+matplot(1:356,data_long[,3],type="l",lty=1,ylab="",main="donnees brutes")
+matplot(1:356,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissées")
+```
+
+## Moyenne fonctionnelle
+
+Nous calculons la moyenne de notre objet fonctionnel :
+
+```{r}
+mean_smooth_data = mean.fd(smoothdata$fd)
+mean_smooth_data
+```
+
+```{r}
+# ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
+#   geom_line() +
+#   geom_line(aes(x = mean_smooth_data$fdnames$time, y = mean_smooth_data$params))+
+#   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat") +
+#   theme_minimal()
+
+matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
+lines(mean_smooth_data,lwd=2)
+```
+
+## Ecart-type fonctionnel
+
+```{r}
+sd_smooth_data= sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
+```
+
+```{r}
+matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
+fnmoy = eval.fd(1:365,mean_smooth_data)
+fnsd  = eval.fd(1:365,sd_smooth_data)
+lines(fnmoy,lwd=2)
+lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
+lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
 ```
 
 
