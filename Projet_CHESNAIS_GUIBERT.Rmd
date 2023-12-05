@@ -489,6 +489,10 @@ Cette courbe est influencée par les valeurs extrêmes car nous pouvons observer
 
 ## Ecart-type fonctionnel
 
+La représentation de l'écart-type fonctionnel permet de caractériser la variabilité de nos signaux sur la période étudiée. \
+Nous allons pouvoir identifier s'il existe des périodes de stabilité ou d'instabilité entre le début et la fin de l'année 2019. \
+Aussi, nous allons pouvoir comparer les différents Etats pour analyser d'éventuels similarités ou différences. 
+
 ```{r}
 sd_smooth_data= sd.fd(smoothdata$fd)
 ```
@@ -505,29 +509,34 @@ lines(fnmoy,lwd=2)
 lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
 lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
 ```
+Ce graphique nous permet de visualiser les consommations d'énergie (données lissées) des différents Etats en Inde. La courbe moyenne, en noir, nous permet d'avoir une idée de la tendance centrale. La plage de variabilité est définie par les pointillés en bleus, correspondant à la moyenne plus (ou moins) 2 fois l'écart-type. \
+La majorité des pays présentent donc des données lissées proches de la moyenne. Nous pouvons identifier quelques Etats atypiques.
+
 
 ## Surface de covariance et corrélation
 
+Afin d'explorer les relations et les dépendances entre nos différents Etats.
+
 ### Covariance
+
+Dans un premier temps, nous allons mesurer comment les consommations des Etats évoluent conjointement en fonction du temps.
 
 ```{r}
 cov = var.fd(smoothdata$fd)
 surfcov = eval.bifd(seq(1,356,length=35),seq(1,356,length=35),cov)
 ```
 
-Pour le tracé d'une surface, il est préférable de choisir un nombre modéré de points dans la grille d'évaluation (la représentation est rapidement illisible dans le cas contraire). Ici, nous choisissons arbitrairement 30 points répartis entre 1 et 365.
+Pour le tracé d'une surface, il est préférable de choisir un nombre modéré de points dans la grille d'évaluation (la représentation est rapidement illisible dans le cas contraire). Ici, nous choisissons arbitrairement 30 points répartis entre 1 et 356.
 
 ```{r}
 persp(surfcov,col="gray",theta=30,xlab="jours",ylab="jours",zlab="covariance")
 ```
-# A COMMENTER
+L'analyse de cette représentation est assez compliquée car elle permet de visualiser la covariance entre les différentes consommations des Etats selon les jours, mais aucune tendance claire ne se dégage.
 
 ```{r}
 contour(surfcov)
 ```
-
-Ligne de niveau
-# A COMMENTER
+De même, cette représentation devraient pouvoir nous aider pour identifier la covariance entre les consommations d'énergie des Etats selon les jours mais il est presque illisible.
 
 ### Représentation graphique en couleur
 
@@ -535,15 +544,23 @@ Ligne de niveau
 filled.contour(surfcov)
 ```
 
+En général, on peut voir que la covariance est "moyenne" entre le début et la fin de l'année pour chaque Etat. Nous pouvons observer des moments où la covariance est moins importante, autour du mois d'Avril (0.4) et de Septembre (0.8). 
+
+
 ### Corrélation
 
-De même pour la corrélation
+L'analyse de la corrélation nous permet de détecter si nous avons des effets d'un jour à l'autre sur la consommation d'Energie dans les divers Etats d'Inde.
+
+Nous construisons d'abord la matrice de corrélation :
 
 ```{r}
 cor = cor.fd(seq(1,356,length=35),smoothdata$fd)
+# cor
 ```
 
-Elle renvoie directement la matrice de corrélation empirique évaluée en les points demandés
+Cette manipulation nous permet de récupérer la matrice de corrélation empirique évaluée (sur les données lissées) en chaque point de temps (jour).
+
+Nous allons représenter graphiquement la matrice de corrélation :
 
 ```{r}
 persp(cor,col="gray",theta=90,
@@ -551,12 +568,16 @@ persp(cor,col="gray",theta=90,
       ylab="jours",zlab="corrélation")
 ```
 
+La corrélation est difficilement interprétable sur le graphe, nous allons essayer une autre méthode.
+
 ### Représentation graphique en couleur
 
 ```{r}
 filled.contour(cor)
 ```
 
+Nous pouvons observer une corrélation égale à 1 sur la diagonale car la consommation d'un jour est forcément corrélée avec elle-même. \
+De plus, nous pouvons voir que les corrélations sont globalement fortes d'un jour à l'autre, ce qui signifie que la consommation de la veille influence celle du lendemain. 
 
 ### ACP fonctionnelle
 
@@ -596,7 +617,7 @@ Il est logique de retrouver des graphiques avec des courbes quasiments égales �
 
 [Représentation des individus dans le premier plan factoriel]{.underline}
 
-Les scores des individus sont stockés dans la matrice `scores` de `ACPF`
+Les scores des individus sont stockés dans la matrice `scores` de `ACPF`. Nous allons les représenter sur le premier plan factoriel. 
 
 ```{r}
 head(ACPF$scores)
@@ -610,17 +631,16 @@ nomsvilles = colnames(data_long[,c(-1)])
 regions = as.factor(data$Regions)
 text(ACPF$scores[,1],
      ACPF$scores[,2],
-     labels=nomsvilles,cex=0.7,col=as.numeric(r))
+     labels=nomsvilles,cex=0.7,col=as.numeric(regions))
 legend("topleft",legend = levels(regions),col=1:4,lty=1)
 ```
 
-Nous arrivons à distinguer les consommations d'énergie selon la région. Cependant, nous observons quelques exceptions.
+Aucune région ne semble se distinguer concernant les consommations d'énergie des Etats. Cependant, nous observons quelques exceptions comme la région NR (Nord) où quelques Etats présentent des valeurs assez élevées sur le second axe factoriel contrairement à la région SR (Sud) où les valeurs sont plutôt faibles.
 
-Pour la première compostante principale (abscisse), les Etats concentrés à droite du graphique présentent des valeurs de consommations d'énergie élevées. Par exemple, Telangana et l'Etat du Madhya Pradesh (MP) et Gujarat sont des grands consommateurs d'énergies.
+Pour la première compostante principale (abscisse), les Etats concentrés à droite du graphique présentent des valeurs de consommations d'énergie élevées. Par exemple, Maharashtra et l'Etat du Gujarat sont des grands consommateurs d'énergies. Pour les petites valeurs, les Etats présentent des consommations plus faibles. Cette observation est en adéquation avec les premières représentations graphiques que nous avons réalisées au début de ce rapport.
 
-Pour la deuxième composante principale (ordonnée), pour les Etats situés en haut du graphique, cela indique que leur consommation d'énergie est très variable selon les périodes de l'année. L'Etat du Punjab et Haryana présentent beaucoup d'écarts de valeurs. \ 
-Pour les petites valeurs, les Etats présentent des consommations plus stables. Cette observation est en adéquation avec les premières représentations graphiques que nous avons réalisées au début de ce rapport.
-
+Pour la deuxième composante principale (ordonnée), pour les Etats situés en haut du graphique, cela indique que leur consommation d'énergie est très variable selon les périodes de l'année. L'Etat du Punjab et Uttar Pradesh (UP) présentent beaucoup d'écarts de valeurs. \ 
+Pour les petites valeurs, cela signifie que les Etats ont des consommations d'énergie plus stables entre le début et la fin de la période étudiée.
 
 
 # Sources 
