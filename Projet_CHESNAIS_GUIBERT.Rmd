@@ -328,10 +328,10 @@ plot(tps,y,type="l", main = "Consommation d'énergie du Chhattisgarh")
 
 
 ```{r,message=FALSE,warning=FALSE}
-splbasis = create.bspline.basis(rangeval = c(min(data$Consommation),max(data$Consommation)),
+splbasis = create.bspline.basis(rangeval = c(1,356),
                                 norder=6, 
-                                breaks=seq(min(data$Consommation),
-                                           max(data$Consommation),length=35))
+                                breaks=seq(1,
+                                           356,length=35))
 # définition une base de B-spline entre 1 et 356 (les dates) 
 # ordre 4 (classique) 
 # breaks : coupure
@@ -456,16 +456,19 @@ Donc notre objectif ça pourrait être d'avoir un signal "+ lisse" ?
 fhatprim = eval.fd(tps,smoothdata$fd,Lfdobj=1) # dérivé première
 # eval.fd : évalue sur les dates
 fhatpprim = eval.fd(tps,smoothdata$fd,Lfdobj=2) # dérivé seconde
-matplot(tps,cbind(fhatprim,fhatpprim),type="l")
+
+matplot(tps,fhatprim,type="l")
+matplot(tps,fhatpprim,type="l")
 ```
 
 
 
 # Statistiques exploratoire
 
+
 ## Moyenne fonctionnelle
 
-Nous calculons la moyenne de notre objet fonctionnel :
+Afin de visualiser les tendances, nous allons représenter la moyenne de notre objet fonctionnel. 
 
 ```{r}
 mean_smooth_data = mean.fd(smoothdata$fd)
@@ -475,9 +478,14 @@ mean_smooth_data = mean.fd(smoothdata$fd)
 ```{r}
 matplot(fhatsmooth,col="gray",type="l",
         xlab="jours",
-        ylab="Consommation d'énergie")
+        ylab="Consommation d'énergie", 
+        main = "Consommation d'énergie des Etats d'Inde, \n avec tracé de la moyenne"
+        )
 lines(mean_smooth_data,lwd=2) # moyenne
 ```
+Grâce à ce graphique, nous pouvons observer la courbe moyenne de la consommation d'énergie dans les différents Etats d'Inde. Les valeurs de consommations sont situées aux alentours de 100 Méga Units. \
+Cette courbe est influencée par les valeurs extrêmes car nous pouvons observer un grand nombre de courbes avec des valeurs plus faibles de consommation. 
+
 
 ## Ecart-type fonctionnel
 
@@ -599,11 +607,11 @@ plot(ACPF$scores[,1],
      ylab="FPC 2",
      type="n")
 nomsvilles = colnames(data_long[,c(-1)])
-r = as.factor(data$Regions)
+regions = as.factor(data$Regions)
 text(ACPF$scores[,1],
      ACPF$scores[,2],
      labels=nomsvilles,cex=0.7,col=as.numeric(r))
-legend("topleft",legend = levels(climat),col=1:4,lty=1)
+legend("topleft",legend = levels(regions),col=1:4,lty=1)
 ```
 
 Nous arrivons à distinguer les consommations d'énergie selon la région. Cependant, nous observons quelques exceptions.
