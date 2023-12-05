@@ -77,7 +77,7 @@ Au départ, nous avons voulu normaliser les données par le nombre d'habitants d
 
 Nous avons donc choisi de réduire les données de consommation, en soustrayant la moyenne, pour continuer notre analyse avec données moins disproportionnées.
 
-```{r}
+```{r, eval=FALSE}
 moyenne_par_etat <- tapply(data$Consommation, data$Etat, mean)
 
 normalized_energy <- data
@@ -168,7 +168,7 @@ data |>
   filter(Etat=="Tripura") |> 
   ggplot(aes(x = Date, y = Consommation)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat", subtitle = "Etats consommant moins de 50 Mega Units en moyenne") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie du Tripura") +
   theme_minimal()
 ```
 
@@ -187,6 +187,8 @@ max(data$Consommation[data$Etat=="Punjab"])
 ```
 
 [Tableau des moyennes de consommation par Etat]{.underline}
+
+# A METTRE EN JOLIE
 
 ```{r}
 tapply(data$Consommation, data$Etat, mean)
@@ -228,7 +230,7 @@ data |>
   filter(Regions=="SR") |> 
   ggplot(aes(x = Date, y = Consommation,color = Etat)) +
   geom_line() +
-  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie pour les Etats du Sud de l'inde") +
+  labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie pour les Etats du Sud de l'Inde") +
   theme_minimal()
 
 data |> 
@@ -246,6 +248,8 @@ Il serait intéressant de consulter l'avis d'un économiste ou politicien pour a
 
 
 Nous construisons le tableau des moyennes de consommation par région :
+
+# A METTRE EN JOLIE
 
 ```{r}
 tapply(data$Consommation, data$Regions, mean)
@@ -266,6 +270,8 @@ data_long <- data.frame("Etat" = data$Etat,"Date"= data$Date,"Consommation" = da
 
 data_long <- data_long |> 
   pivot_wider(names_from = "Etat", values_from = "Consommation")
+
+data_long <- as.data.frame(data_long)
 head(data_long)
 ```
 
@@ -276,22 +282,25 @@ Nous représentons le signal pour un Etat (ici le Punjab) :
 
 ```{r}
 i = 2
-y <- as.vector(t(unlist(data_long[, i])))
-# 
-# plot(1:356,y,type="l",main="Signal de départ", ylab = "Consommation", xlab="Jour")
-# 
-# # Créer un signal symétrisé
-# ysym = c(y, rev(tail(y, n= 512-length(y)))) # on choisit 512 pour avoir une puissance de 2
-# 
-# # Tracer le signal symétrisé
-# plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation", xlab = "Jour")
-# 
-# # Ajouter une ligne verticale à la position 
-# # axe de symétrie : 361 jours 
-# abline(v = 356, lty = 2)
+y <-  data_long[,i]
+# y
+
+plot(1:356,y,type="l",main="Signal de départ", ylab = "Consommation", xlab="Jour")
+
+# Créer un signal symétrisé
+ysym = c(y, rev(tail(y, n= 512-length(y)))) # on choisit 512 pour avoir une puissance de 2
+
+# Tracer le signal symétrisé
+plot(ysym, type = "l", main = "Signal symétrisé", ylab = "Consommation", xlab = "Jour")
+
+# Ajouter une ligne verticale à la position
+# axe de symétrie : 361 jours
+abline(v = 356, lty = 2)
 ```
 
 # CONTINUER A COMMENTER PLUS TARD
+
+
 
 # Lissage par moindres carrés pénalisés
 
@@ -299,24 +308,23 @@ y <- as.vector(t(unlist(data_long[, i])))
 
 ## Lissage d'une trajectoire
 
-
-
-### Pour un individu
+### Pour un Etat
 
 ```{r}
-y <- as.vector(t(unlist(data_long[, i]))) # courbe du premier Etat : Punjab
+i = 2
+y <- data_long[, 2] 
 tps <- 1:356
 plot(tps,y,type="l", main = "Consommation d'énergie du Punjab")
 ```
 
 ```{r}
 i = 10
-y <- as.vector(t(unlist(data_long[, i]))) # courbe du dixième Etat : Chhattisgarh
+y <- data_long[, i] # courbe du dixième Etat : Chhattisgarh
 tps <- 1:356
 plot(tps,y,type="l", main = "Consommation d'énergie du Chhattisgarh")
 ```
 
-1. Lissage par moindres carrés pénalisés sur la première courbe
+#### Lissage par moindres carrés pénalisés sur la première courbe
 
 
 ```{r,message=FALSE,warning=FALSE}
@@ -335,42 +343,28 @@ plot(splbasis)
 ```{r}
 summary(splbasis)
 ```
-
+# a commenter
 
 ```{r}
-# On fait l'ajustement pour différentes valeurs de lambda pour minimiser le critère de pénalité
-# On veut la fonction la plus proche des points et la moins oscillante grâce à la pénalité
-
-gcv = rep(0,50) # grille de lambda
-
-for (i in 1:50){
-  
-  lambda = exp(i-10)
-  
-  fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) # calcul de la valeur de pénalité
-  # Lfdoj = 2 : ordre de la dérivée dans la pénalité (dérivée seconde)
-  
-  smoothdata = smooth.basis(tps,y, fdParobj = fdpar) # ajustement de l'objet fonctionnel
-  
-  # smooth.basis : équivalent à Data2fd mais AVEC pénalité
-  # donne la valeur du critère VC de Moindres Carrés Généralisé
-  
-  gcv[i] = smoothdata$gcv # gcv : general cross validation
+i = 2
+y = data_long[,i]
+gcv = 1:30 # grille de lambda
+for (i in 1:30){
+  lambda = exp(i-10) 
+  fdpar= fdPar(splbasis,Lfdobj =4,lambda=lambda)
+  smoothdata = smooth.basis(tps,y,fdParobj = fdpar) 
+  gcv[i] = smoothdata$gcv 
 }
 plot(gcv)
 which.min(gcv)
 ```
 
-Nous avons observé que la valeur optimale de lambda est la 4ème valeur, correspondant au minimum. Cette valeur nous permettra d'être proche des données observées. \
-Nous avons choisi de paramétrer le nombre de coupures à 35 car les signaux sont très irréguliers et nous souhaitons être  proche, raisonnablement, du signal d'origine. Ce choix est arbitraire car il peut engendrer du sur-apprentissage si le nombre de coupures est trop élevée par rapport au signal de départ.
-
-
-Nous allons recalculer la pénalité et refaire le lissage avec la valeur de lambda minimale : 
+# A COMMENTER
 
 ```{r}
 lambda = exp(which.min(gcv)-10)
-fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) # calcul pénalité
-smoothdata = smooth.basis(tps,y,fdParobj = fdpar) # lissage
+fdparTemp = fdPar(splbasis,Lfdobj = 4,lambda=lambda) 
+smoothdata = smooth.basis(tps,y,fdParobj = fdpar)
 ```
 
 Nous représentons sur un même graphe les observations et la fonction estimée reconstruite ˆf.
@@ -384,10 +378,74 @@ plotfit.fd(y,# valeur de consommation pour un pays
            cex=0.5,
            main="les observations et la fonction estimée reconstruite ˆf",
            ylab = "consommation d'énergie",
-           xlab="temps",
-           xlim = c(0,356))
+           xlab="temps")
 ```
+# PB SIGNAL TROP LONG
+
+
+Représente les points et l'objet fonctionnel ajusté dessus Objet pas trop oscillante et qui suit les points (peu ne pas suivre exactement si bruit de mesure)
+
+```{r}
+fhatprim = eval.fd(tps,smoothdata$fd,Lfdobj=1)
+fhatpprim = eval.fd(tps,smoothdata$fd,Lfdobj=2)
+matplot(tps,cbind(fhatprim,fhatpprim),type="l")
+```
+
+
+### Pour l'ensemble des Etats
+
+On fait l'ajustement pour différentes valeurs de lambda pour minimiser le critère de pénalité.
+On veut la fonction la plus proche des points et la moins oscillante grâce à la pénalité
+
+
+```{r}
+gcv = rep(0,30) # grille de lambda
+
+for (i in 1:30){
+  lambda = exp(i-10)
+  fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) 
+  # calcul de la valeur de pénalité
+  # Lfdoj = 4 : ordre de la dérivée dans la pénalité (dérivée seconde)
+  
+  smoothdata = smooth.basis(tps,as.matrix(data_long[,c(-1)]), fdParobj = fdpar)   # ajustement de l'objet fonctionnel
+  # donne la valeur du critère VC de Moindres Carrés Généralisé
+  
+  gcv[i] = mean(smoothdata$gcv) # gcv : general cross validation
+}
+plot(gcv)
+which.min(gcv)
+```
+
+Nous avons observé que la valeur optimale de lambda est la 16ème valeur, correspondant au minimum. Cette valeur nous permettra d'être proche des données observées. \
+Nous avons choisi de paramétrer le nombre de coupures à 35 car les signaux sont très irréguliers et nous souhaitons être  proche, raisonnablement, du signal d'origine. Ce choix est arbitraire car il peut engendrer du sur-apprentissage si le nombre de coupures est trop élevée par rapport au signal de départ.
+
+
+Nous allons recalculer la pénalité et refaire le lissage avec la valeur de lambda minimale : 
+
+```{r}
+lambda = exp(which.min(gcv)-10)
+fdpar = fdPar(splbasis,Lfdobj = 4,lambda=lambda) # calcul pénalité
+smoothdata = smooth.basis(tps,as.matrix(data_long[,c(-1)]),fdParobj = fdpar) # lissage
+```
+
+
 On a représenté les points et l'objet fonctionnel. 
+
+```{r}
+fhatsmooth <- eval.fd(tps, smoothdata$fd)
+```
+
+
+#### Représentation pour l'ensemble des Etats
+
+Nous représentons les observations et la fonction estimée reconstruite ˆf.
+
+```{r}
+matplot(tps,data_long[,c(-1)],type="l",lty=1,ylab="",main="donnees brutes")
+matplot(tps,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissees")
+```
+
+
 
 # IDEE :
 la prof a dit que ça dépendait de nos objectifs. Comme on a pas une base d'ondelettes, est-ce qu'on va réellement pouvoir reproduire le signal ?
@@ -401,23 +459,9 @@ fhatpprim = eval.fd(tps,smoothdata$fd,Lfdobj=2) # dérivé seconde
 matplot(tps,cbind(fhatprim,fhatpprim),type="l")
 ```
 
-La dérivée première est en noir et la dérivée seconde en rouge.
 
 
 # Statistiques exploratoire
-
-## Courbe lissée
-
-[Pour un Etat]{.underline}
-
-Nous représentons les données brutes et les données lissées pour un Etat
-
-```{r}
-fhatsmooth = eval.fd(1:356,smoothdata$fd)
-par(mfrow=c(1,2))
-matplot(1:356,data_long[,3],type="l",lty=1,ylab="",main="donnees brutes")
-matplot(1:356,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissées")
-```
 
 ## Moyenne fonctionnelle
 
@@ -425,34 +469,149 @@ Nous calculons la moyenne de notre objet fonctionnel :
 
 ```{r}
 mean_smooth_data = mean.fd(smoothdata$fd)
-mean_smooth_data
+# mean_smooth_data
 ```
 
 ```{r}
-# ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
-#   geom_line() +
-#   geom_line(aes(x = mean_smooth_data$fdnames$time, y = mean_smooth_data$params))+
-#   labs(x = "Date", y = "Consommation d'énergie", title = "Consommation d'énergie par Etat") +
-#   theme_minimal()
-
-matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
-lines(mean_smooth_data,lwd=2)
+matplot(fhatsmooth,col="gray",type="l",
+        xlab="jours",
+        ylab="Consommation d'énergie")
+lines(mean_smooth_data,lwd=2) # moyenne
 ```
 
 ## Ecart-type fonctionnel
 
 ```{r}
-sd_smooth_data= sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
+sd_smooth_data= sd.fd(smoothdata$fd)
 ```
 
 ```{r}
-matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
-fnmoy = eval.fd(1:365,mean_smooth_data)
-fnsd  = eval.fd(1:365,sd_smooth_data)
+matplot(fhatsmooth,
+        col="gray",type="l",
+        xlab="jours",
+        ylab="Consommation d'énergie",
+        ylim = c(-200,500))
+fnmoy = eval.fd(y,mean_smooth_data)
+fnsd  = eval.fd(y,sd_smooth_data)
 lines(fnmoy,lwd=2)
 lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
 lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
 ```
+
+## Surface de covariance et corrélation
+
+### Covariance
+
+```{r}
+cov = var.fd(smoothdata$fd)
+surfcov = eval.bifd(seq(1,356,length=35),seq(1,356,length=35),cov)
+```
+
+Pour le tracé d'une surface, il est préférable de choisir un nombre modéré de points dans la grille d'évaluation (la représentation est rapidement illisible dans le cas contraire). Ici, nous choisissons arbitrairement 30 points répartis entre 1 et 365.
+
+```{r}
+persp(surfcov,col="gray",theta=30,xlab="jours",ylab="jours",zlab="covariance")
+```
+# A COMMENTER
+
+```{r}
+contour(surfcov)
+```
+
+Ligne de niveau
+# A COMMENTER
+
+### Représentation graphique en couleur
+
+```{r}
+filled.contour(surfcov)
+```
+
+### Corrélation
+
+De même pour la corrélation
+
+```{r}
+cor = cor.fd(seq(1,356,length=35),smoothdata$fd)
+```
+
+Elle renvoie directement la matrice de corrélation empirique évaluée en les points demandés
+
+```{r}
+persp(cor,col="gray",theta=90,
+      phi=40,xlab="jours",
+      ylab="jours",zlab="corrélation")
+```
+
+### Représentation graphique en couleur
+
+```{r}
+filled.contour(cor)
+```
+
+
+### ACP fonctionnelle
+
+```{r}
+ACPF = pca.fd(smoothdata$fd,nharm=4,centerfns = TRUE)
+ACPF$varprop
+cumsum(ACPF$varprop)
+```
+
+La première composante explique 99% de la variabilité. 
+
+
+### Représentations des composantes principales
+
+Nous représentons en premier lieu les composantes principales obtenues
+
+```{r}
+plot(ACPF$harmonics)
+```
+
+La première est en noir est tout le temps positive.
+
+
+Donc plus de poids dans les mois d'hiver et moins de poids dans les mois d'été
+
+Ou, pour une interprétation plus aisée, la moyenne augmentée ou diminuée des premières fonctions propres.
+
+On peut utilisée la fonction `plot.pca.fd` pour cette représentation.
+
+```{r}
+plot.pca.fd(ACPF)
+```
+Il est logique de retrouver des graphiques avec des courbes quasiments égales à 0 car la première composante explique quasiment 100% de la variabilité.
+
+
+### Représentation des individus
+
+[Représentation des individus dans le premier plan factoriel]{.underline}
+
+Les scores des individus sont stockés dans la matrice `scores` de `ACPF`
+
+```{r}
+head(ACPF$scores)
+plot(ACPF$scores[,1],
+     ACPF$scores[,2],
+     pch=20,
+     xlab="FPC 1",
+     ylab="FPC 2",
+     type="n")
+nomsvilles = colnames(data_long[,c(-1)])
+r = as.factor(data$Regions)
+text(ACPF$scores[,1],
+     ACPF$scores[,2],
+     labels=nomsvilles,cex=0.7,col=as.numeric(r))
+legend("topleft",legend = levels(climat),col=1:4,lty=1)
+```
+
+Nous arrivons à distinguer les consommations d'énergie selon la région. Cependant, nous observons quelques exceptions.
+
+Pour la première compostante principale (abscisse), les Etats concentrés à droite du graphique présentent des valeurs de consommations d'énergie élevées. Par exemple, Telangana et l'Etat du Madhya Pradesh (MP) et Gujarat sont des grands consommateurs d'énergies.
+
+Pour la deuxième composante principale (ordonnée), pour les Etats situés en haut du graphique, cela indique que leur consommation d'énergie est très variable selon les périodes de l'année. L'Etat du Punjab et Haryana présentent beaucoup d'écarts de valeurs. \ 
+Pour les petites valeurs, les Etats présentent des consommations plus stables. Cette observation est en adéquation avec les premières représentations graphiques que nous avons réalisées au début de ce rapport.
 
 
 
