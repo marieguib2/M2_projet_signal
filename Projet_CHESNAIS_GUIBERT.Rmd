@@ -17,14 +17,13 @@ library(readxl)
 library(tidyr)
 library(fda)
 library(knitr)
-library(kableExtra)
 ```
 
 # I. Notre base de données
 
 Notre étude porte sur l'analyse de la consommation d'énergie dans les 33
 Etats d'Inde. Il est à noter que l'Inde est le troisième producteur et
-le troisième consommateur d'électricité au monde. \
+le troisième consommateur d'électricité au monde.\
 Nous avons choisi ce sujet car il est au coeur des problématiques
 sociétales actuelles. En effet, dans les politiques actuelles, la
 question de l'environnement a une part importante. Notamment, la gestion
@@ -50,6 +49,7 @@ data <- data[,-c(3,4)]
 summary(data)
 # View(data)
 ```
+
 ```{r}
 dim(data)
 ```
@@ -59,9 +59,12 @@ dans **33 Etats** d'Inde entre 2019 et 2020.\
 Nous avons 16 434 lignes, soit **498 points de mesure** par pays
 (498\*33). Les données sont journalières, exprimées en Mega Units.
 
-Grâce au résumé statistique ci-dessus, nous pouvons voir que les valeurs de nos
-données de consommation d'énergie sont assez étendues : elles sont
-comprises entre 0.3 et 522.1 Mega Units. La consommation moyenne en Inde est de 103.1 Mega Units en comparaison avec la médiane qui est de 64.5 Mega Units. Ainsi, la moyenne est très influencée par les valeurs extrêmes de certains Etats de notre jeu de données. \
+Grâce au résumé statistique ci-dessus, nous pouvons voir que les valeurs
+de nos données de consommation d'énergie sont assez étendues : elles
+sont comprises entre 0.3 et 522.1 Mega Units. La consommation moyenne en
+Inde est de 103.1 Mega Units en comparaison avec la médiane qui est de
+64.5 Mega Units. Ainsi, la moyenne est très influencée par les valeurs
+extrêmes de certains Etats de notre jeu de données.\
 
 ```{r}
 data$Etat[which.max(data$Consommation)]
@@ -72,7 +75,6 @@ En effet, certaines valeurs journalières sont très faibles (inférieures
 à 1) alors que d'autres sont 500 fois plus élevées. Par exemple, le
 Maharashtra qui présente certaines valeurs très importantes en
 opposition avec le Sikkim.
-
 
 ## I.B. Choix de la période étudiée
 
@@ -99,8 +101,10 @@ bien à la période choisie.
 min(data$Date)
 max(data$Date)
 ```
-Notre étude porte sur la période du 02 Janvier 2019 au 02 Janvier 2020. \
-Nous avons pu observer que les données du 1er de chaque mois sont manquantes mais cela n'impactera pas notre analyse.
+
+Notre étude porte sur la période du 02 Janvier 2019 au 02 Janvier 2020.\
+Nous avons pu observer que les données du 1er de chaque mois sont
+manquantes mais cela n'impactera pas notre analyse.
 
 ## I.C. Normalisation des données
 
@@ -126,8 +130,10 @@ head(normalized_energy)
 
 Suite à cette normailisation, nous pouvons observer une diminution
 importante des valeurs. Mais nous obtenons des valeurs de consommations
-négatives, ce qui pose problème pour l'interprétation de nos analyses. De plus, mettre les données en valeur absolue n'aurait pas de sens dans notre contxte.
-Nous avons donc choisi travailler avec les valeurs initiales.
+négatives, ce qui pose problème pour l'interprétation de nos analyses.
+De plus, mettre les données en valeur absolue n'aurait pas de sens dans
+notre contxte. Nous avons donc choisi travailler avec les valeurs
+initiales.
 
 ## I.D. Représentations graphiques
 
@@ -142,11 +148,15 @@ ggplot(data, aes(x = Date, y = Consommation, color = Etat)) +
   theme_minimal()
 ```
 
-Ce graphique nous montre que nos données sont très irrégulières. Cependant, la lecture des valeurs est assez compliqué à cause du nombre important d'Etats et des fluctuations, c'est pourquoi la représentation selon les régions d'Inde nous a paru pertinente. \
+Ce graphique nous montre que nos données sont très irrégulières.
+Cependant, la lecture des valeurs est assez compliqué à cause du nombre
+important d'Etats et des fluctuations, c'est pourquoi la représentation
+selon les régions d'Inde nous a paru pertinente.\
 
 [Représentation des données en différentes parties].{underline}
 
-Nous avons fixé des seuils par rapport à la moyenne de consommations des Etats pour réaliser ces graphiques.
+Nous avons fixé des seuils par rapport à la moyenne de consommations des
+Etats pour réaliser ces graphiques.
 
 [Calcul de la moyenne par Etat].{underline}
 
@@ -164,7 +174,8 @@ data_complete <- merge(data,moyenne_par_etat, by = "Etat")
 
 [Séparation de notre jeu de données].{underline}
 
-On sépare les données en 3 catégories d'Etats caractérisant leur consommation d'énergie :
+On sépare les données en 3 catégories d'Etats caractérisant leur
+consommation d'énergie :
 
 ```{r}
 data_inf <- data_complete |> 
@@ -334,13 +345,14 @@ knitr::kable(tapply(data$Consommation, data$Regions, mean),
 
 Nous observons une hétérogénéité en termes de consommations entre les
 régions de l'Inde. En effet, le Nord-Est a une consommation très faible
-par rapport à l'Ouest. Peut-être qu'un expert pourrait aussi nous donner les causes de ces écarts de consommation. 
+par rapport à l'Ouest. Peut-être qu'un expert pourrait aussi nous donner
+les causes de ces écarts de consommation.
 
 # II. Ondelettes
 
-Puisque nos signaux sont irréguliers, notre choix de lissage s'est d'abord
-tourné vers les ondelettes car elles ont des bonnes propriétés de
-compressions et sont adaptées à ce type de données.
+Puisque nos signaux sont irréguliers, notre choix de lissage s'est
+d'abord tourné vers les ondelettes car elles ont des bonnes propriétés
+de compressions et sont adaptées à ce type de données.
 
 Pour pouvoir poursuivre cette étude, nous avons du transformer notre
 dataframe de départ pour avoir chaque Etat en colonne avec la valeur de
@@ -384,19 +396,26 @@ abline(v = 356, lty = 2)
 ```
 
 La méthode des ondelettes est complexe et nous ne disposons pas des
-connaissances nécessaires pour faire une analyse très approndie. De plus, il
-n'est pas possible de réaliser une ACP avec les ondelettes.
+connaissances nécessaires pour faire une analyse très approndie. De
+plus, il n'est pas possible de réaliser une ACP avec les ondelettes.
 
 Nous nous tournons donc vers le lissage par moindres carrés pénalisés à
 l'aide des bases de splines pour continuer notre étude.
 
 # III. Lissage par moindres carrés pénalisés - Base de Spline
 
-L'utilisation d'une base de spline pénalisée nous a semblé être adaptée à nos signaux. Effectivement, cette méthode présente une grande flexibilité de modélisation pour les données plus ou moins irrégulières. Cette approche permet de capturer des comportements non linéaires, de gérer les valeurs aberrantes, de réduire la dimension de l'espace des caractéristiques, et de s'adapter à diverses structures de données. La pénalisation va nous permet d'éviter un sur-ajustement de nos données. 
+L'utilisation d'une base de spline pénalisée nous a semblé être adaptée
+à nos signaux. Effectivement, cette méthode présente une grande
+flexibilité de modélisation pour les données plus ou moins irrégulières.
+Cette approche permet de capturer des comportements non linéaires, de
+gérer les valeurs aberrantes, de réduire la dimension de l'espace des
+caractéristiques, et de s'adapter à diverses structures de données. La
+pénalisation va nous permet d'éviter un sur-ajustement de nos données.
 
 ## III.A. Lissage d'une trajectoire (pour un Etat)
 
-Nous allons d'abotrd effectuer le lissage sur un seul Etat : le Punjab, pour ensuite généraliser à l'ensemble des Etats.
+Nous allons d'abotrd effectuer le lissage sur un seul Etat : le Punjab,
+pour ensuite généraliser à l'ensemble des Etats.
 
 [Représentation de la consommation d'énergie]{.underline}
 
@@ -432,7 +451,8 @@ fonctionnelle des données.
 La plage des données s'étend entre 1 et 356, correspondant à nos temps
 de mesure.
 
-Nous allons rechercher la valeur de lambda optimale pour trouver le meilleur lissage de nos données. 
+Nous allons rechercher la valeur de lambda optimale pour trouver le
+meilleur lissage de nos données.
 
 ```{r}
 i = 2
@@ -473,9 +493,13 @@ plotfit.fd(y,# valeur de consommation pour un pays
            xlab="temps")
 ```
 
-Nous obtenons une fonction estimée reconstruite lisse pour l'Etat du Punjab. Elle est beaucoup moins irrégulière que nos données de base. Elle prend globalement en compte les variations de consommation d'énergie du Punjab sur une l'année 2019.
+Nous obtenons une fonction estimée reconstruite lisse pour l'Etat du
+Punjab. Elle est beaucoup moins irrégulière que nos données de base.
+Elle prend globalement en compte les variations de consommation
+d'énergie du Punjab sur une l'année 2019.
 
-Nous représentons la dérivée première et la dérivée seconde sur le même graphique :
+Nous représentons la dérivée première et la dérivée seconde sur le même
+graphique :
 
 ```{r}
 fhatprim = eval.fd(tps,smoothdata$fd,Lfdobj=1)
@@ -483,9 +507,15 @@ fhatpprim = eval.fd(tps,smoothdata$fd,Lfdobj=2)
 matplot(tps,cbind(fhatprim,fhatpprim),type="l")
 ```
 
-La dérivée première, en noir, correspondant à la vitesse de croissance, n'est pas très lisse. Elle indique que par moment dans l'année, la consommation d'énergie diminue ou augmente brusquement. Par exemple au niveau du 20ème et 140ème jour, sa consommation d'énergie décroit rapidement. A la fin de l'année, celle-ci explose.
+La dérivée première, en noir, correspondant à la vitesse de croissance,
+n'est pas très lisse. Elle indique que par moment dans l'année, la
+consommation d'énergie diminue ou augmente brusquement. Par exemple au
+niveau du 20ème et 140ème jour, sa consommation d'énergie décroit
+rapidement. A la fin de l'année, celle-ci explose.
 
-Les dérivées obtenues sont régulières (on a pris une base d'ordre plus élevé, égale à 6) et le lissage est contraint par la rugosité de la dérivée seconde avec une pénalité sur la dérivée d'ordre 6.
+Les dérivées obtenues sont régulières (on a pris une base d'ordre plus
+élevé, égale à 6) et le lissage est contraint par la rugosité de la
+dérivée seconde avec une pénalité sur la dérivée d'ordre 6.
 
 ## III.B. Pour l'ensemble des Etats
 
@@ -493,8 +523,10 @@ Nous allons généraliser notre démarche pour tous les Etats.
 
 [Lissage par moindre carrés pénalisés]{.underline}
 
-On fait l'ajustement pour différentes valeurs de lambda pour minimiser le critère de pénalité.\
-On veut la fonction la plus proche des points et la moins oscillante grâce à la pénalité.
+On fait l'ajustement pour différentes valeurs de lambda pour minimiser
+le critère de pénalité.\
+On veut la fonction la plus proche des points et la moins oscillante
+grâce à la pénalité.
 
 ```{r}
 # Initialisation d'une grille de lambda
@@ -552,8 +584,9 @@ la tendance de la consommation d'énergie pour chacun des Etats.
 Lors de la création de notre base de spline, nous avons choisi 35
 coupures, ce qui biaise forcément notre analyse. Avec ces courbes
 lissées, les analyses ne sont pas exhaustives pour éviter le
-sur-apprentissage. Avec cette représentation, nous pouvons supposer qu'il y a
-plus de variabilité en hiver (première partie de l'année) qu'en été. Il faudrait un expert pour nous aiguiller sur ce sujet. 
+sur-apprentissage. Avec cette représentation, nous pouvons supposer
+qu'il y a plus de variabilité en hiver (première partie de l'année)
+qu'en été. Il faudrait un expert pour nous aiguiller sur ce sujet.
 
 Nous représentons maintenant la dérivée première et seconde pour étudier
 les vitesses de croissance et les accélérations de croissance.
@@ -568,11 +601,15 @@ matplot(tps,
 matplot(tps, fhatpprim, type = "l",
         main = "Dérivée seconde")
 ```
-Les dérivés premières montrent des fluctuations, ce qui implique des différences de vitesse de consommation dans les différents Etats. 
+
+Les dérivés premières montrent des fluctuations, ce qui implique des
+différences de vitesse de consommation dans les différents Etats.
 
 # IV. Statistiques exploratoires
 
-Nous allons réaliser quelques statistiques exploratoires pour  pouvoir appréhender au mieux les données et détecter les pays avec un comportement atypique.  
+Nous allons réaliser quelques statistiques exploratoires pour pouvoir
+appréhender au mieux les données et détecter les pays avec un
+comportement atypique.
 
 ## IV.A. Moyenne fonctionnelle
 
@@ -741,26 +778,27 @@ plot(ACPF$harmonics)
 
 La première composante (en noir) est tout le temps positive.
 Globalement, elle a quelques variations, environ au 30ème, 140ème et
-280ème jour de l'année. Elle a donc tendance à être plus élevé en hiver.
+280ème jour de l'année. La consommation d'énergie a donc tendance à être
+plus élevée en hiver.
 
 Pour une interprétation plus aisée, on représente la moyenne augmentée
 ou diminuée des premières fonctions propres.
 
-On peut utilisée la fonction `plot.pca.fd` pour cette représentation.
+On peut utiliser la fonction `plot.pca.fd` pour cette représentation.
 
 ```{r}
 plot.pca.fd(ACPF)
 ```
 
-Pour la première fonction propre:
+Pour la première fonction propre :
 
 -   La courbe en noir représente la moyenne
 
 -   La courbe avec des "-" représente la moyenne - alpha \* la première
-    composantes principales
+    composante principale
 
 -   La courbe avec des "+" représente la moyenne + alpha \* la première
-    composantes principales
+    composante principale
 
 Comme évoqué précédemment, nous pouvons supposer qu'il y a plus de
 variabilité en hiver qu'en été.
@@ -812,12 +850,20 @@ plus stables entre le début et la fin de la période étudiée.
 
 # V. Conclusion
 
-Pour rappel, nous avons analysé la consommation d'énergie dans les 33 Etats d'Inde.
-Pour cela, nous avons réalisé un lissage pénalisé avec des bases de splines. Cette méthode est efficace pour modéliser et représenter les tendances complexes des données. En utilisant ces splines, nous avons pu capturer les variations locales tout en maintenant une certaine régularite. Cela permet une visualisation plus claire des motifs sous-jacents. De plus, cela permet de révéler des tendances significatives et réduire le bruit, offrant ainsi une meilleure compréhension de la dynamique de la consommation d'énergie dans ces différents Etats d'Inde.
+Pour rappel, nous avons analysé la consommation d'énergie dans les 33
+Etats d'Inde. Pour cela, nous avons réalisé un lissage pénalisé avec des
+bases de splines. Cette méthode est efficace pour modéliser et
+représenter les tendances complexes de nos données. En utilisant ces
+splines, nous avons pu capturer les variations locales tout en
+maintenant une certaine régularité. De plus, cela permet de révéler
+d'éventuelles tendances et de réduire le bruit. Cette étude nous offre
+ainsi une meilleure compréhension de la dynamique de la consommation
+d'énergie dans ces différents Etats d'Inde.
 
-Nous avons pu mettre en évidence des disparités entre les Etats mais aussi entre les régions de l'Inde. L'avis d'experts sur ce sujet nous permettraient de compléter notre analyse et optimiser cette consommation d'énergie pour limiter son impact sur l'environnement.
-
-
+Nous avons pu mettre en évidence des disparités entre les Etats mais
+aussi entre les régions de l'Inde. L'avis d'experts sur ce sujet nous
+permettraient de compléter notre analyse et d'optimiser cette
+consommation d'énergie afin de limiter son impact sur l'environnement.
 
 # VI. Sources
 
