@@ -1,8 +1,10 @@
 ---
 title: "Analyse des données de consommations d'énergie en Inde"
-output: html_notebook
-editor_options: 
-  markdown: 
+output:
+  pdf_document: default
+  html_notebook: default
+editor_options:
+  markdown:
     wrap: 72
 ---
 
@@ -221,7 +223,8 @@ max(data$Consommation[data$Etat=="Punjab"])
 knitr::kable(tapply(data$Consommation, data$Etat, mean),
              "simple",
              caption = "Tableau des moyennes des consommation par Etat",
-             col.names = "Moyenne")
+             col.names = "Moyenne",
+             longtable = TRUE, width = "100%")
 ```
 
 [Représentation selon la région]{.underline}
